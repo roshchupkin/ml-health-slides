@@ -311,6 +311,51 @@
             background: #667eea;
             color: white;
         }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .network-canvas, .gradient-canvas, .loss-canvas {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -431,9 +476,13 @@
 
             drawNetwork() {
                 const canvas = document.getElementById('networkCanvas');
+                if (!canvas) {
+                    console.error('Network canvas not found');
+                    return;
+                }
                 const ctx = canvas.getContext('2d');
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
+                canvas.width = canvas.offsetWidth || 800;
+                canvas.height = canvas.offsetHeight || 400;
                 
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -518,9 +567,13 @@
 
             drawGradientFlow() {
                 const canvas = document.getElementById('gradientCanvas');
+                if (!canvas) {
+                    console.error('Gradient canvas not found');
+                    return;
+                }
                 const ctx = canvas.getContext('2d');
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
+                canvas.width = canvas.offsetWidth || 400;
+                canvas.height = canvas.offsetHeight || 200;
                 
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -565,9 +618,13 @@
 
             drawLossSurface() {
                 const canvas = document.getElementById('lossCanvas');
+                if (!canvas) {
+                    console.error('Loss canvas not found');
+                    return;
+                }
                 const ctx = canvas.getContext('2d');
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
+                canvas.width = canvas.offsetWidth || 600;
+                canvas.height = canvas.offsetHeight || 250;
                 
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -710,37 +767,76 @@
             }
         }
 
-        const visualizer = new BackpropagationVisualizer();
+        let visualizer;
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                visualizer = new BackpropagationVisualizer();
+                console.log('Backpropagation visualizer initialized successfully');
+            } catch (error) {
+                console.error('Error initializing visualizer:', error);
+            }
+        });
 
         function startBackpropagation() {
-            visualizer.startBackpropagation();
+            if (visualizer) {
+                visualizer.startBackpropagation();
+            } else {
+                console.error('Visualizer not initialized');
+            }
         }
 
         function resetAnimation() {
-            visualizer.resetAnimation();
+            if (visualizer) {
+                visualizer.resetAnimation();
+            } else {
+                console.error('Visualizer not initialized');
+            }
         }
 
         function stepForward() {
-            visualizer.stepForward();
+            if (visualizer) {
+                visualizer.stepForward();
+            } else {
+                console.error('Visualizer not initialized');
+            }
         }
 
         function setAnimationSpeed(speed) {
-            visualizer.setAnimationSpeed(speed);
+            if (visualizer) {
+                visualizer.setAnimationSpeed(speed);
+            } else {
+                console.error('Visualizer not initialized');
+            }
         }
 
-        // Update learning rate
-        document.getElementById('learningRate').addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            document.getElementById('lrValue').textContent = value.toFixed(2);
-            visualizer.learningRate = value;
-        });
+        // Initialize event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update learning rate
+            const learningRateInput = document.getElementById('learningRate');
+            if (learningRateInput) {
+                learningRateInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    const lrValue = document.getElementById('lrValue');
+                    if (lrValue) lrValue.textContent = value.toFixed(2);
+                    if (visualizer) visualizer.learningRate = value;
+                });
+            }
 
-        // Update target output
-        document.getElementById('targetOutput').addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            document.getElementById('targetValue').textContent = value.toFixed(1);
-            visualizer.targetOutput = value;
-            visualizer.updateLoss();
+            // Update target output
+            const targetOutputInput = document.getElementById('targetOutput');
+            if (targetOutputInput) {
+                targetOutputInput.addEventListener('input', function() {
+                    const value = parseFloat(this.value);
+                    const targetValue = document.getElementById('targetValue');
+                    if (targetValue) targetValue.textContent = value.toFixed(1);
+                    if (visualizer) {
+                        visualizer.targetOutput = value;
+                        visualizer.updateLoss();
+                    }
+                });
+            }
         });
     </script>
 </body>
