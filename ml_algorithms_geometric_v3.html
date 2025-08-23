@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Algorithms - Geometric Representations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #a0aec0;
+            font-weight: 300;
+        }
+
+        .algorithms-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .algorithm-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .algorithm-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .algorithm-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            border-radius: 10px;
+        }
+
+        .visualization-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 400px;
+        }
+
+        .canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .description {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        .description h4 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        @media (max-width: 768px) {
+            .algorithms-container {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .visualization-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ML Algorithms: Geometric View</h1>
+            <p>Interactive visualizations showing how different machine learning algorithms work</p>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn active" onclick="showAlgorithm('all')">Show All</button>
+            <button class="control-btn" onclick="showAlgorithm('linear')">Linear Regression</button>
+            <button class="control-btn" onclick="showAlgorithm('logistic')">Logistic Regression</button>
+            <button class="control-btn" onclick="showAlgorithm('tree')">Decision Tree</button>
+            <button class="control-btn" onclick="showAlgorithm('forest')">Random Forest</button>
+
+            <button class="control-btn" onclick="showAlgorithm('svm')">SVM</button>
+            <button class="control-btn" onclick="showAlgorithm('naive')">Naive Bayes</button>
+        </div>
+
+        <div class="algorithms-container">
+            <div class="algorithm-card" id="linear-card">
+                <div class="algorithm-title">Linear Regression</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="linearCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works geometrically:</h4>
+                    Finds the best-fitting straight line through data points by minimizing the sum of squared distances (residuals) from points to the line. The line represents the relationship y = mx + b.
+                </div>
+            </div>
+
+            <div class="algorithm-card" id="logistic-card">
+                <div class="algorithm-title">Logistic Regression</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="logisticCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works geometrically:</h4>
+                    Uses a sigmoid (S-shaped) curve to separate classes. The curve maps any input to a value between 0 and 1, representing probability. Decision boundary is typically at 0.5 probability.
+                </div>
+            </div>
+
+            <div class="algorithm-card" id="tree-card">
+                <div class="algorithm-title">Decision Tree</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="treeCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works geometrically:</h4>
+                    Creates rectangular decision regions by making binary splits parallel to feature axes. Each split divides the space into two regions, creating a tree-like hierarchy of decisions.
+                </div>
+            </div>
+
+            <div class="algorithm-card" id="forest-card">
+                <div class="algorithm-title">Random Forest</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="forestCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works geometrically:</h4>
+                    Combines multiple decision trees, each creating different rectangular regions. The final decision is made by majority voting, creating smoother, more robust decision boundaries.
+                </div>
+            </div>
+
+            <div class="algorithm-card" id="svm-card">
+                <div class="algorithm-title">Support Vector Machine</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="svmCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works geometrically:</h4>
+                    Finds the optimal hyperplane that maximizes the margin between classes. Support vectors are the closest points to the decision boundary and define the separation.
+                </div>
+            </div>
+
+            <div class="algorithm-card" id="naive-card">
+                <div class="algorithm-title">Naive Bayes</div>
+                <div class="visualization-container">
+                    <img id="naiveImg" data-src="naive_bayes_geometric.png" alt="Naive Bayes density illustration" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:10px;" />
+                    <canvas class="canvas" id="naiveCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works geometrically:</h4>
+                    Uses Bayes' theorem with the <b>naive assumption</b> that features are independent given the class. Each class has its own (often Gaussian) distribution per feature; the overall likelihood is the product of 1D likelihoods. This leads to <b>axis-aligned</b> density contours and typically <b>simple decision boundaries</b>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate sample data points
+        function generateData() {
+            const data = [];
+            for (let i = 0; i < 30; i++) {
+                data.push({
+                    x: Math.random() * 300 + 50,
+                    y: Math.random() * 300 + 50,
+                    class: Math.random() > 0.5 ? 1 : 0,
+                    value: Math.random() * 200 + 50
+                });
+            }
+            return data;
+        }
+
+        const data = generateData();
+
+        // Linear Regression Visualization
+        function drawLinearRegression() {
+            const canvas = document.getElementById('linearCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Clean white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const margin = 60;
+            const plotWidth = canvas.width - 2 * margin;
+            const plotHeight = canvas.height - 2 * margin;
+            
+            // Generate scatter data points with some correlation
+            const scatterData = [];
+            for (let i = 0; i < 25; i++) {
+                const x = Math.random() * plotWidth;
+                const y = plotHeight * 0.7 - (x * 0.5) + (Math.random() - 0.5) * plotHeight * 0.4;
+                scatterData.push({
+                    x: margin + x,
+                    y: margin + Math.max(20, Math.min(plotHeight - 20, y))
+                });
+            }
+            
+            // Draw data points
+            scatterData.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#4A90E2';
+                ctx.fill();
+                ctx.strokeStyle = '#357ABD';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+            
+            // Draw best fit line
+            ctx.beginPath();
+            ctx.moveTo(margin + 20, margin + plotHeight * 0.8);
+            ctx.lineTo(canvas.width - margin - 20, margin + plotHeight * 0.2);
+            ctx.strokeStyle = '#E74C3C';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Draw some residual lines (dotted)
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#95A5A6';
+            ctx.lineWidth = 1;
+            
+            scatterData.slice(0, 8).forEach(point => {
+                // Calculate line y at this x position
+                const lineProgress = (point.x - margin - 20) / (plotWidth - 40);
+                const lineY = margin + plotHeight * 0.8 - lineProgress * plotHeight * 0.6;
+                
+                ctx.beginPath();
+                ctx.moveTo(point.x, point.y);
+                ctx.lineTo(point.x, lineY);
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+            
+            // Add title and equation
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#2C3E50';
+            ctx.textAlign = 'left';
+            ctx.fillText('y = mx + b (Best fit line)', margin, margin - 20);
+        }
+
+        // Logistic Regression Visualization
+        function drawLogisticRegression() {
+            const canvas = document.getElementById('logisticCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Clean white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const margin = 70;
+            const plotWidth = canvas.width - 2 * margin;
+            const plotHeight = canvas.height - 2 * margin;
+            
+            // Draw clean axes
+            ctx.strokeStyle = '#2C3E50';
+            ctx.lineWidth = 3;
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(margin, canvas.height - margin);
+            ctx.stroke();
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(margin, canvas.height - margin);
+            ctx.lineTo(canvas.width - margin, canvas.height - margin);
+            ctx.stroke();
+            
+            // Draw horizontal reference lines
+            // y = 1 line (solid blue)
+            ctx.strokeStyle = '#4A90E2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(margin, margin);
+            ctx.lineTo(canvas.width - margin, margin);
+            ctx.stroke();
+            
+            // y = 0 line (solid blue)
+            ctx.beginPath();
+            ctx.moveTo(margin, canvas.height - margin);
+            ctx.lineTo(canvas.width - margin, canvas.height - margin);
+            ctx.stroke();
+            
+            // Draw the perfect sigmoid curve
+            ctx.beginPath();
+            ctx.strokeStyle = '#2C3E50';
+            ctx.lineWidth = 4;
+            
+            const centerX = margin + plotWidth / 2;
+            const centerY = margin + plotHeight / 2;
+            
+            for (let i = 0; i <= plotWidth; i += 2) {
+                const x = margin + i;
+                const t = (i - plotWidth/2) / (plotWidth/8); // Adjust steepness
+                const sigmoidY = 1 / (1 + Math.exp(-t));
+                const y = margin + plotHeight - sigmoidY * plotHeight;
+                
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            // Add data points - green for class 1, blue for class 0
+            const class1Points = [
+                {x: canvas.width - margin - 30, y: margin + 15},
+                {x: canvas.width - margin - 60, y: margin + 10},
+                {x: canvas.width - margin - 45, y: margin + 20},
+                {x: canvas.width - margin - 80, y: margin + 25}
+            ];
+            
+            const class0Points = [
+                {x: margin + 30, y: canvas.height - margin - 15},
+                {x: margin + 60, y: canvas.height - margin - 10},
+                {x: margin + 45, y: canvas.height - margin - 20}
+            ];
+            
+            // Draw class 1 points (green)
+            class1Points.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#27AE60';
+                ctx.fill();
+                ctx.strokeStyle = '#1E8449';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+            
+            // Draw class 0 points (blue)
+            class0Points.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#4A90E2';
+                ctx.fill();
+                ctx.strokeStyle = '#357ABD';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+            
+            // Add labels
+            ctx.font = 'bold 18px Arial';
+            ctx.fillStyle = '#2C3E50';
+            ctx.textAlign = 'center';
+            
+            // Y label
+            ctx.save();
+            ctx.translate(25, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Y', 0, 0);
+            ctx.restore();
+            
+            // X label  
+            ctx.fillText('X', canvas.width / 2, canvas.height - 15);
+            
+            // y=1 and y=0 labels
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillText('y = 1', margin - 45, margin + 5);
+            ctx.fillText('y = 0', margin - 45, canvas.height - margin + 5);
+            
+            // Add annotation with arrow
+            const arrowStartX = centerX + 100;
+            const arrowStartY = centerY - 50;
+            const arrowEndX = centerX + 40;
+            const arrowEndY = centerY - 10;
+            
+            // Arrow line
+            ctx.strokeStyle = '#7F8C8D';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(arrowStartX, arrowStartY);
+            ctx.lineTo(arrowEndX, arrowEndY);
+            ctx.stroke();
+            
+            // Arrow head
+            const headLen = 8;
+            const angle = Math.atan2(arrowEndY - arrowStartY, arrowEndX - arrowStartX);
+            ctx.beginPath();
+            ctx.moveTo(arrowEndX, arrowEndY);
+            ctx.lineTo(arrowEndX - headLen * Math.cos(angle - Math.PI / 6), arrowEndY - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(arrowEndX, arrowEndY);
+            ctx.lineTo(arrowEndX - headLen * Math.cos(angle + Math.PI / 6), arrowEndY - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+            
+            // Annotation text
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#7F8C8D';
+            ctx.textAlign = 'left';
+            ctx.fillText('S-shaped', arrowStartX + 5, arrowStartY);
+            ctx.fillText('curve', arrowStartX + 5, arrowStartY + 15);
+            ctx.fillText('Predicted Y', arrowStartX + 5, arrowStartY + 40);
+            ctx.fillText('lies between', arrowStartX + 5, arrowStartY + 55);
+            ctx.fillText('0 and 1 range', arrowStartX + 5, arrowStartY + 70);
+        }
+
+        // Decision Tree Visualization
+        function drawDecisionTree() {
+            const canvas = document.getElementById('treeCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#f7fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw rectangular regions
+            const regions = [
+                {x: 0, y: 0, w: canvas.width/2, h: canvas.height/2, color: '#fed7d7'},
+                {x: canvas.width/2, y: 0, w: canvas.width/2, h: canvas.height/2, color: '#c6f6d5'},
+                {x: 0, y: canvas.height/2, w: canvas.width/3, h: canvas.height/2, color: '#c6f6d5'},
+                {x: canvas.width/3, y: canvas.height/2, w: canvas.width/3, h: canvas.height/2, color: '#fed7d7'},
+                {x: 2*canvas.width/3, y: canvas.height/2, w: canvas.width/3, h: canvas.height/2, color: '#c6f6d5'}
+            ];
+            
+            regions.forEach(region => {
+                ctx.fillStyle = region.color;
+                ctx.fillRect(region.x, region.y, region.w, region.h);
+                ctx.strokeStyle = '#2d3748';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(region.x, region.y, region.w, region.h);
+            });
+            
+            // Draw data points
+            data.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = point.class === 1 ? '#38a169' : '#e53e3e';
+                ctx.fill();
+                ctx.strokeStyle = '#1a202c';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            
+            // Labels
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#1a202c';
+            ctx.fillText('Rectangular Decision Regions', 20, 30);
+        }
+
+        // Random Forest Visualization
+        function drawRandomForest() {
+            const canvas = document.getElementById('forestCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#f7fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw overlapping decision regions from multiple trees
+            const trees = [
+                [{x: 0, y: 0, w: canvas.width/2.2, h: canvas.height/1.8, color: 'rgba(254, 215, 215, 0.6)'}],
+                [{x: canvas.width/2.5, y: canvas.height/3, w: canvas.width/2, h: canvas.height/2, color: 'rgba(198, 246, 213, 0.6)'}],
+                [{x: canvas.width/4, y: 0, w: canvas.width/2.5, h: canvas.height, color: 'rgba(190, 227, 248, 0.6)'}]
+            ];
+            
+            trees.forEach((tree, treeIndex) => {
+                tree.forEach(region => {
+                    ctx.fillStyle = region.color;
+                    ctx.fillRect(region.x, region.y, region.w, region.h);
+                    ctx.strokeStyle = `hsl(${treeIndex * 120}, 50%, 50%)`;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.strokeRect(region.x, region.y, region.w, region.h);
+                });
+            });
+            ctx.setLineDash([]);
+            
+            // Draw data points
+            data.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = point.class === 1 ? '#38a169' : '#e53e3e';
+                ctx.fill();
+                ctx.strokeStyle = '#1a202c';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+            
+            // Labels
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#1a202c';
+            ctx.fillText('Multiple Overlapping Decision Trees', 20, 30);
+        }
+
+        // Neural Network Visualization
+        function drawNeuralNetwork() {
+            const canvas = document.getElementById('neuralCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#f7fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw complex curved decision boundary
+            ctx.beginPath();
+            ctx.strokeStyle = '#e53e3e';
+            ctx.lineWidth = 3;
+            let x = 50;
+            let y = canvas.height/2 + Math.sin(0) * 80;
+            ctx.moveTo(x, y);
+            
+            for (let i = 1; i < canvas.width - 50; i += 10) {
+                x = 50 + i;
+                y = canvas.height/2 + Math.sin(i * 0.02) * 80 + Math.cos(i * 0.01) * 30;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            // Draw data points
+            data.forEach(point => {
+                const boundaryY = canvas.height/2 + Math.sin(point.x * 0.02) * 80 + Math.cos(point.x * 0.01) * 30;
+                const actualClass = point.y < boundaryY ? 1 : 0;
+                
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = actualClass === 1 ? '#48bb78' : '#4299e1';
+                ctx.fill();
+                ctx.strokeStyle = '#1a202c';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            
+            // Draw network nodes representation
+            const layers = [[100, 150], [200, 120, 180], [300]];
+            layers.forEach((layer, layerIndex) => {
+                layer.forEach((nodeY, nodeIndex) => {
+                    ctx.beginPath();
+                    ctx.arc(50 + layerIndex * 100, nodeY, 15, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#667eea';
+                    ctx.fill();
+                    ctx.strokeStyle = '#4c51bf';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Draw connections
+                    if (layerIndex < layers.length - 1) {
+                        layers[layerIndex + 1].forEach(nextNodeY => {
+                            ctx.beginPath();
+                            ctx.moveTo(50 + layerIndex * 100 + 15, nodeY);
+                            ctx.lineTo(50 + (layerIndex + 1) * 100 - 15, nextNodeY);
+                            ctx.strokeStyle = '#a0aec0';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        });
+                    }
+                });
+            });
+            
+            // Labels
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#1a202c';
+            ctx.fillText('Non-linear Complex Decision Boundary', 20, 30);
+        }
+
+        // SVM Visualization
+        function drawSVM() {
+            const canvas = document.getElementById('svmCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#f7fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Decision boundary
+            ctx.beginPath();
+            ctx.moveTo(50, canvas.height - 100);
+            ctx.lineTo(canvas.width - 50, 100);
+            ctx.strokeStyle = '#e53e3e';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Margin boundaries
+            const offset = 30;
+            ctx.beginPath();
+            ctx.moveTo(50, canvas.height - 100 - offset);
+            ctx.lineTo(canvas.width - 50, 100 - offset);
+            ctx.strokeStyle = '#9ca3af';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(50, canvas.height - 100 + offset);
+            ctx.lineTo(canvas.width - 50, 100 + offset);
+            ctx.strokeStyle = '#9ca3af';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw data points
+            data.forEach((point, index) => {
+                const lineY = (canvas.height - 100) - ((point.x - 50) / (canvas.width - 100)) * (canvas.height - 200);
+                const isAbove = point.y < lineY;
+                
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = isAbove ? '#48bb78' : '#4299e1';
+                ctx.fill();
+                
+                // Highlight support vectors
+                if (Math.abs(point.y - lineY) < offset + 10 && index < 6) {
+                    ctx.strokeStyle = '#f56565';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = '#1a202c';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+            
+            // Labels
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#1a202c';
+            ctx.fillText('Maximum Margin Separator', 20, 30);
+            ctx.fillText('Support Vectors (red outline)', 20, 50);
+        }
+
+        // Initialize all visualizations
+        function initializeVisualizations() {
+            drawLinearRegression();
+            drawLogisticRegression();
+            drawDecisionTree();
+            drawRandomForest();
+            drawSVM();
+            loadNaiveBayesImageOrDraw();
+        }
+
+        // Show specific algorithm
+        function showAlgorithm(algorithm) {
+            const cards = document.querySelectorAll('.algorithm-card');
+            const buttons = document.querySelectorAll('.control-btn');
+            
+            // Update button states
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (algorithm === 'all') {
+                cards.forEach(card => card.style.display = 'block');
+            } else {
+                cards.forEach(card => {
+                    card.style.display = card.id === algorithm + '-card' ? 'block' : 'none';
+                });
+            }
+        }
+
+        // Redraw on window resize
+        window.addEventListener('resize', () => {
+            setTimeout(initializeVisualizations, 100);
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeVisualizations);
+        
+        // Prefer an image for Naive Bayes if available
+        function loadNaiveBayesImageOrDraw(){
+            const img = document.getElementById('naiveImg');
+            const canvas = document.getElementById('naiveCanvas');
+            // Read path from data attribute; default to file in same folder
+            const base = img.getAttribute('data-src') || 'naive_bayes_geometric.png';
+            // Cache-busting to force reload
+            const src = base + (base.includes('?') ? '&' : '?') + 'v=' + Date.now();
+            img.onload = ()=>{
+                img.style.display = 'block';
+                canvas.style.display = 'none';
+            };
+            img.onerror = ()=>{
+                // fallback to canvas rendering
+                img.style.display = 'none';
+                canvas.style.display = 'block';
+                drawNaiveBayes();
+            };
+            img.src = src;
+        }
+        
+        // Naive Bayes Visualization (Gaussian Naive Bayes)
+        function drawNaiveBayes(){
+            const canvas = document.getElementById('naiveCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            // Clean white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Better Gaussian generator with fixed seed for consistency
+            function seededRandom(seed) {
+                const x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            }
+            
+            function gaussian(seed) {
+                // Box-Muller transform with seeded random
+                const u = seededRandom(seed);
+                const v = seededRandom(seed + 1);
+                return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+            }
+
+            const nPts = 120; // More points for better distribution
+            const classA = [];
+            const classB = [];
+            const cx = canvas.width/2, cy = canvas.height/2;
+
+            // Better positioned and sized distributions
+            const muAx = cx - 80, muAy = cy - 30;
+            const sxAx = 60, sxAy = 25; // More realistic axis-aligned variances
+            const muBx = cx + 60, muBy = cy + 40;
+            const sxBx = 35, sxBy = 50;
+
+            // Generate more realistic distributions
+            for(let i=0; i<nPts; i++){
+                classA.push({
+                    x: muAx + gaussian(i*3)*sxAx,
+                    y: muAy + gaussian(i*3+1)*sxAy
+                });
+                classB.push({
+                    x: muBx + gaussian(i*3+2)*sxBx,
+                    y: muBy + gaussian(i*3+3)*sxBy
+                });
+            }
+
+            // Draw density contours (multiple sigma levels)
+            function drawDensityContours(muX, muY, sxX, sxY, color, alpha) {
+                const sigmas = [0.5, 1, 1.5, 2];
+                sigmas.forEach((sigma, i) => {
+                    const opacity = alpha * (1 - i * 0.2);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.ellipse(muX, muY, sxX * sigma, sxY * sigma, 0, 0, 2 * Math.PI);
+                    ctx.fillStyle = `rgba(${color}, ${opacity})`;
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
+
+            // Draw density contours for both classes
+            drawDensityContours(muAx, muAy, sxAx, sxAy, '46, 204, 113', 0.15);
+            drawDensityContours(muBx, muBy, sxBx, sxBy, '74, 144, 226', 0.15);
+
+            // Draw axis-aligned covariance ellipses (1-sigma)
+            function drawEllipse(cx, cy, rx, ry, stroke, dash = true){
+                ctx.save();
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, Math.abs(rx), Math.abs(ry), 0, 0, 2*Math.PI);
+                ctx.strokeStyle = stroke;
+                ctx.lineWidth = 2.5;
+                if(dash) ctx.setLineDash([8, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
+            }
+
+            // Draw ellipses with better colors
+            drawEllipse(muAx, muAy, sxAx, sxAy, 'rgba(46, 204, 113, 0.9)', true);
+            drawEllipse(muBx, muBy, sxBx, sxBy, 'rgba(74, 144, 226, 0.9)', true);
+
+            // Plot points with better styling
+            function drawPoints(arr, fill, stroke){
+                arr.forEach(p=>{
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, 2*Math.PI);
+                    ctx.fillStyle = fill;
+                    ctx.fill();
+                    ctx.strokeStyle = stroke;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            }
+            drawPoints(classA, '#2ecc71', '#27ae60');
+            drawPoints(classB, '#4a90e2', '#2980b9');
+
+            // Improved decision boundary calculation
+            function logGaussian(x, mu, sigma){
+                return -0.5*Math.log(2*Math.PI*sigma*sigma) - ((x-mu)*(x-mu))/(2*sigma*sigma);
+            }
+
+            function boundaryYGivenX(x){
+                // Calculate log-likelihood difference for x dimension
+                const rhs = (logGaussian(x, muBx, sxBx) - logGaussian(x, muAx, sxAx));
+                
+                // For y dimension, solve quadratic equation
+                const invA2 = 1/(sxAy*sxAy);
+                const invB2 = 1/(sxBy*sxBy);
+                const A = invB2 - invA2;
+                const B = (-2*muBy*invB2) + (2*muAy*invA2);
+                const C = (muBy*muBy*invB2) - (muAy*muAy*invA2) + Math.log((sxBy*sxBy)/(sxAy*sxAy)) - 2*rhs;
+                
+                if(Math.abs(A) < 1e-10){
+                    if(Math.abs(B) < 1e-10) return null;
+                    return -C/B;
+                }
+                
+                const disc = B*B - 4*A*C;
+                if(disc < 0) return null;
+                
+                const sqrtD = Math.sqrt(Math.max(0, disc));
+                const y1 = (-B + sqrtD)/(2*A);
+                const y2 = (-B - sqrtD)/(2*A);
+                
+                // Choose the root that makes more sense geometrically
+                const midY = (muAy + muBy)/2;
+                return (Math.abs(y1 - midY) < Math.abs(y2 - midY)) ? y1 : y2;
+            }
+
+            // Draw smooth decision boundary
+            ctx.beginPath();
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            let started = false;
+            let lastY = null;
+            
+            for(let x = 40; x <= canvas.width - 40; x += 1.5){
+                const y = boundaryYGivenX(x);
+                if(y != null && y >= 40 && y <= canvas.height - 40){
+                    if(!started){
+                        ctx.moveTo(x, y);
+                        started = true;
+                    } else {
+                        // Smooth interpolation if there's a large gap
+                        if(lastY !== null && Math.abs(y - lastY) > 20){
+                            const steps = Math.ceil(Math.abs(y - lastY) / 10);
+                            for(let i = 1; i <= steps; i++){
+                                const interpY = lastY + (y - lastY) * (i / steps);
+                                ctx.lineTo(x, interpY);
+                            }
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    lastY = y;
+                } else {
+                    started = false;
+                    lastY = null;
+                }
+            }
+            ctx.stroke();
+
+            // Add labels with better positioning
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#2c3e50';
+            ctx.textAlign = 'left';
+            ctx.fillText('Axis-aligned Gaussian densities', 20, 30);
+            ctx.fillText('Naive Bayes decision boundary', 20, 50);
+            
+            // Add class labels
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#27ae60';
+            ctx.fillText('Class A', muAx - 20, muAy - 40);
+            ctx.fillStyle = '#2980b9';
+            ctx.fillText('Class B', muBx - 20, muBy + 60);
+        }
+    </script>
+</body>
+</html>

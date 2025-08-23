@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Algorithms Summary - Healthcare Focus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .slide-container {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+            max-width: 1400px;
+            width: 100%;
+            padding: 50px;
+            animation: slideIn 1s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.3rem;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .algorithms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .algorithm-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(102, 126, 234, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algorithm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .algorithm-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
+        }
+
+        .algorithm-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            letter-spacing: -0.3px;
+        }
+
+        .algorithm-title::before {
+            content: '🏥';
+            margin-right: 15px;
+            font-size: 1.4rem;
+        }
+
+        .card-section {
+            margin-bottom: 22px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .pros {
+            color: #059669;
+        }
+
+        .cons {
+            color: #dc2626;
+        }
+
+        .application {
+            color: #2563eb;
+        }
+
+        .summary {
+            color: #7c3aed;
+        }
+
+        .section-content {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #334155;
+            font-weight: 400;
+        }
+
+        .pros .section-content {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(5, 150, 105, 0.04));
+            padding: 16px 20px;
+            border-radius: 16px;
+            border-left: 5px solid #059669;
+        }
+
+        .cons .section-content {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(220, 38, 38, 0.04));
+            padding: 16px 20px;
+            border-radius: 16px;
+            border-left: 5px solid #dc2626;
+        }
+
+        .application .section-content {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.04));
+            padding: 16px 20px;
+            border-radius: 16px;
+            border-left: 5px solid #2563eb;
+            font-weight: 500;
+        }
+
+        .healthcare-examples {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            padding: 18px 24px;
+            border-radius: 16px;
+            margin-top: 12px;
+            border: 2px solid rgba(37, 99, 235, 0.15);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .healthcare-examples::before {
+            content: '🩺 Healthcare Examples: ';
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 3px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .footer p {
+            color: #64748b;
+            font-style: italic;
+            font-size: 1.1rem;
+            font-weight: 400;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .slide-container {
+                padding: 30px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2.4rem;
+            }
+
+            .header p {
+                font-size: 1.1rem;
+            }
+
+            .algorithms-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .algorithm-card {
+                padding: 28px;
+            }
+
+            .algorithm-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="header">
+            <h1>ML Algorithms in Healthcare</h1>
+            <p>A comprehensive guide to machine learning applications in medical practice and clinical decision support</p>
+        </div>
+
+        <div class="algorithms-grid">
+            <div class="algorithm-card">
+                <div class="algorithm-title">Linear Regression</div>
+                
+                <div class="card-section pros">
+                    <div class="section-title">✅ Pros</div>
+                    <div class="section-content">
+                        Simple and highly interpretable. Requires minimal computational power. Provides clear coefficient relationships.
+                    </div>
+                </div>
+
+                <div class="card-section cons">
+                    <div class="section-title">❌ Cons</div>
+                    <div class="section-content">
+                        Assumes linear relationship between features and target. Sensitive to outliers and multicollinearity.
+                    </div>
+                </div>
+
+                <div class="card-section application">
+                    <div class="section-title">🎯 Healthcare Applications</div>
+                    <div class="section-content">
+                        Predicting patient recovery times, drug dosage optimization, cost forecasting for treatments.
+                        <div class="healthcare-examples">
+                            Estimating blood pressure based on age and BMI, predicting hospital length of stay, modeling medication effectiveness over time, forecasting healthcare costs.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-section summary">
+                    <div class="section-title">📋 Summary</div>
+                    <div class="section-content">
+                        Models linear relationships between medical variables and outcomes for predictive healthcare analytics and resource planning.
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card">
+                <div class="algorithm-title">Logistic Regression</div>
+                
+                <div class="card-section pros">
+                    <div class="section-title">✅ Pros</div>
+                    <div class="section-content">
+                        Simple, fast, and interpretable. Provides probability scores for outcomes. Handles categorical variables well.
+                    </div>
+                </div>
+
+                <div class="card-section cons">
+                    <div class="section-title">❌ Cons</div>
+                    <div class="section-content">
+                        Assumes linear decision boundary. May be outperformed by more complex models for non-linear relationships.
+                    </div>
+                </div>
+
+                <div class="card-section application">
+                    <div class="section-title">🎯 Healthcare Applications</div>
+                    <div class="section-content">
+                        Disease diagnosis, treatment success prediction, patient risk assessment, screening tests.
+                        <div class="healthcare-examples">
+                            Diabetes screening, heart attack risk prediction, cancer detection from biomarkers, surgical outcome prediction, patient readmission risk.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-section summary">
+                    <div class="section-title">📋 Summary</div>
+                    <div class="section-content">
+                        Predicts probability of binary medical outcomes (disease/no disease, success/failure) with interpretable coefficients.
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card">
+                <div class="algorithm-title">Decision Trees</div>
+                
+                <div class="card-section pros">
+                    <div class="section-title">✅ Pros</div>
+                    <div class="section-content">
+                        Easy to understand and visualize. Can handle both numerical and categorical data. No assumptions about data distribution.
+                    </div>
+                </div>
+
+                <div class="card-section cons">
+                    <div class="section-title">❌ Cons</div>
+                    <div class="section-content">
+                        Prone to overfitting. Can become overly complex. Sensitive to small changes in data.
+                    </div>
+                </div>
+
+                <div class="card-section application">
+                    <div class="section-title">🎯 Healthcare Applications</div>
+                    <div class="section-content">
+                        Clinical decision support, diagnostic pathways, treatment selection, patient triage.
+                        <div class="healthcare-examples">
+                            Symptom-based diagnosis trees, treatment protocol selection, patient triage systems, medical guideline automation, risk stratification.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-section summary">
+                    <div class="section-title">📋 Summary</div>
+                    <div class="section-content">
+                        Creates interpretable decision pathways that mirror clinical reasoning processes and medical decision trees.
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card">
+                <div class="algorithm-title">Random Forest</div>
+                
+                <div class="card-section pros">
+                    <div class="section-title">✅ Pros</div>
+                    <div class="section-content">
+                        Robust to overfitting. Can handle large datasets with high dimensionality. Provides feature importance rankings.
+                    </div>
+                </div>
+
+                <div class="card-section cons">
+                    <div class="section-title">❌ Cons</div>
+                    <div class="section-content">
+                        Less interpretable compared to single decision tree. Requires more computational power. Can be slow for real-time applications.
+                    </div>
+                </div>
+
+                <div class="card-section application">
+                    <div class="section-title">🎯 Healthcare Applications</div>
+                    <div class="section-content">
+                        Complex diagnostic tasks, ensemble predictions, biomarker discovery, electronic health record analysis.
+                        <div class="healthcare-examples">
+                            Multi-disease risk assessment, genomic data analysis, drug discovery, EHR pattern recognition, medical image classification.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-section summary">
+                    <div class="section-title">📋 Summary</div>
+                    <div class="section-content">
+                        Combines multiple decision trees for robust predictions in complex healthcare scenarios with built-in feature selection.
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card">
+                <div class="algorithm-title">Naive Bayes</div>
+                
+                <div class="card-section pros">
+                    <div class="section-title">✅ Pros</div>
+                    <div class="section-content">
+                        Fast training and prediction. Works well with small datasets. Handles missing data gracefully. Provides probability estimates.
+                    </div>
+                </div>
+
+                <div class="card-section cons">
+                    <div class="section-title">❌ Cons</div>
+                    <div class="section-content">
+                        Assumes feature independence (naive assumption). May not capture complex relationships between variables.
+                    </div>
+                </div>
+
+                <div class="card-section application">
+                    <div class="section-title">🎯 Healthcare Applications</div>
+                    <div class="section-content">
+                        Disease classification, text analysis of medical reports, spam detection in medical communications, risk assessment.
+                        <div class="healthcare-examples">
+                            Medical document classification, symptom-based disease prediction, patient email triage, medical literature analysis, clinical text mining.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-section summary">
+                    <div class="section-title">📋 Summary</div>
+                    <div class="section-content">
+                        Probabilistic classifier based on Bayes theorem, excellent for text analysis and medical document processing.
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card">
+                <div class="algorithm-title">Support Vector Machines</div>
+                
+                <div class="card-section pros">
+                    <div class="section-title">✅ Pros</div>
+                    <div class="section-content">
+                        Effective in high dimensional spaces. Provides clear margin of separation. Robust to overfitting with proper regularization.
+                    </div>
+                </div>
+
+                <div class="card-section cons">
+                    <div class="section-title">❌ Cons</div>
+                    <div class="section-content">
+                        Less effective on large datasets. Requires careful kernel choice and parameter tuning. Computationally intensive.
+                    </div>
+                </div>
+
+                <div class="card-section application">
+                    <div class="section-title">🎯 Healthcare Applications</div>
+                    <div class="section-content">
+                        High-precision classification, especially when classes are closely related or data is high-dimensional.
+                        <div class="healthcare-examples">
+                            Cancer subtype classification, protein structure prediction, medical text categorization, gene expression analysis, biomarker classification.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-section summary">
+                    <div class="section-title">📋 Summary</div>
+                    <div class="section-content">
+                        Finds optimal boundaries between different medical conditions or patient groups using sophisticated mathematical optimization.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Selecting the right algorithm depends on data characteristics, interpretability requirements, computational constraints, and clinical validation needs</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost and Loss Functions in ML</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 1s ease-out;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #e0e7ff;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .function-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .function-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+        }
+
+        .function-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #ffd93d;
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            margin: 15px 0;
+            text-align: center;
+            border-left: 4px solid #ffd93d;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .interactive-demo {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #e0e7ff;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .key-points {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .key-points ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-points li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .key-points li:before {
+            content: "✨";
+            position: absolute;
+            left: 0;
+            top: 10px;
+        }
+
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: #333;
+            overflow-x: auto;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .section h2 {
+                font-size: 1.5rem;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cost & Loss Functions in Machine Learning</h1>
+            <p>Understanding the mathematical foundation of model optimization</p>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">📊</span>What are Cost and Loss Functions?</h2>
+            <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px;">
+                Cost and loss functions are mathematical measures that quantify how far off our model's predictions are from the actual values. They guide the learning process by providing a single number that represents the model's performance.
+            </p>
+            
+            <div class="key-points">
+                <h3>Key Concepts:</h3>
+                <ul>
+                    <li><strong>Loss Function:</strong> Measures error for a single training example</li>
+                    <li><strong>Cost Function:</strong> Average loss across all training examples</li>
+                    <li><strong>Objective Function:</strong> General term for what we're trying to minimize</li>
+                    <li><strong>Optimization Goal:</strong> Find parameters that minimize the cost function</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">📈</span>Common Loss Functions</h2>
+            
+            <div class="grid">
+                <div class="function-card">
+                    <h3>Mean Squared Error (MSE)</h3>
+                    <div class="formula">MSE = (1/n) × Σ(yᵢ - ŷᵢ)²</div>
+                    <p><strong>Use Case:</strong> Regression problems</p>
+                    <p><strong>Characteristics:</strong> Penalizes large errors heavily, differentiable everywhere</p>
+                    <p><strong>Pros:</strong> Smooth gradient, commonly used</p>
+                    <p><strong>Cons:</strong> Sensitive to outliers</p>
+                </div>
+
+                <div class="function-card">
+                    <h3>Mean Absolute Error (MAE)</h3>
+                    <div class="formula">MAE = (1/n) × Σ|yᵢ - ŷᵢ|</div>
+                    <p><strong>Use Case:</strong> Regression problems</p>
+                    <p><strong>Characteristics:</strong> Linear penalty for errors</p>
+                    <p><strong>Pros:</strong> Robust to outliers</p>
+                    <p><strong>Cons:</strong> Not differentiable at zero</p>
+                </div>
+
+                <div class="function-card">
+                    <h3>Cross-Entropy Loss</h3>
+                    <div class="formula">CE = -Σ yᵢ × log(ŷᵢ)</div>
+                    <p><strong>Use Case:</strong> Classification problems</p>
+                    <p><strong>Characteristics:</strong> Measures probability distribution difference</p>
+                    <p><strong>Pros:</strong> Good gradient properties, probabilistic interpretation</p>
+                    <p><strong>Cons:</strong> Can be unstable with extreme probabilities</p>
+                </div>
+
+                <div class="function-card">
+                    <h3>Hinge Loss</h3>
+                    <div class="formula">Hinge = max(0, 1 - yᵢ × ŷᵢ)</div>
+                    <p><strong>Use Case:</strong> Support Vector Machines</p>
+                    <p><strong>Characteristics:</strong> Linear loss for misclassified examples</p>
+                    <p><strong>Pros:</strong> Sparse solutions, margin-based</p>
+                    <p><strong>Cons:</strong> Not differentiable at margin boundary</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">⚖️</span>Loss Function Comparison</h2>
+            
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Loss Function</th>
+                            <th>Problem Type</th>
+                            <th>Sensitivity to Outliers</th>
+                            <th>Differentiability</th>
+                            <th>Computational Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Mean Squared Error</td>
+                            <td>Regression</td>
+                            <td>High</td>
+                            <td>Smooth everywhere</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr>
+                            <td>Mean Absolute Error</td>
+                            <td>Regression</td>
+                            <td>Low</td>
+                            <td>Not at zero</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr>
+                            <td>Cross-Entropy</td>
+                            <td>Classification</td>
+                            <td>Medium</td>
+                            <td>Smooth</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>Hinge Loss</td>
+                            <td>Classification (SVM)</td>
+                            <td>Medium</td>
+                            <td>Not at margin</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr>
+                            <td>Huber Loss</td>
+                            <td>Regression</td>
+                            <td>Medium</td>
+                            <td>Smooth</td>
+                            <td>Medium</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">🔍</span>Key Takeaways</h2>
+            
+            <div class="key-points">
+                <ul>
+                    <li><strong>Choose wisely:</strong> The choice of loss function significantly impacts model behavior</li>
+                    <li><strong>Consider your data:</strong> Outliers, noise, and problem type should guide your choice</li>
+                    <li><strong>Optimization matters:</strong> Loss functions must be optimizable (preferably differentiable)</li>
+                    <li><strong>Trade-offs exist:</strong> No single loss function is perfect for all scenarios</li>
+                    <li><strong>Custom losses:</strong> Sometimes domain-specific loss functions work better</li>
+                    <li><strong>Regularization:</strong> Adding regularization terms helps prevent overfitting</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Interactive elements
+        const predictionSlider = document.getElementById('prediction');
+        const predictionValue = document.getElementById('predictionValue');
+        const errorSpan = document.getElementById('error');
+        const mseLossSpan = document.getElementById('mseLoss');
+        const maeLossSpan = document.getElementById('maeLoss');
+        const huberLossSpan = document.getElementById('huberLoss');
+        
+        const trueValue = 7.0;
+        const huberDelta = 1.0;
+        
+        function updateLossValues() {
+            const predicted = parseFloat(predictionSlider.value);
+            const error = Math.abs(predicted - trueValue);
+            
+            const mseLoss = Math.pow(predicted - trueValue, 2);
+            const maeLoss = Math.abs(predicted - trueValue);
+            
+            // Huber loss calculation
+            let huberLoss;
+            if (error <= huberDelta) {
+                huberLoss = 0.5 * Math.pow(predicted - trueValue, 2);
+            } else {
+                huberLoss = huberDelta * (error - 0.5 * huberDelta);
+            }
+            
+            predictionValue.textContent = predicted.toFixed(1);
+            errorSpan.textContent = (predicted - trueValue).toFixed(2);
+            mseLossSpan.textContent = mseLoss.toFixed(2);
+            maeLossSpan.textContent = maeLoss.toFixed(2);
+            huberLossSpan.textContent = huberLoss.toFixed(2);
+            
+            updateChart();
+        }
+        
+        predictionSlider.addEventListener('input', updateLossValues);
+        
+        // Chart setup
+        const ctx = document.getElementById('lossChart').getContext('2d');
+        let chart;
+        
+        function initChart() {
+            const data = [];
+            const labels = [];
+            
+            for (let x = 0; x <= 10; x += 0.1) {
+                labels.push(x.toFixed(1));
+                
+                const mse = Math.pow(x - trueValue, 2);
+                const mae = Math.abs(x - trueValue);
+                const error = Math.abs(x - trueValue);
+                const huber = error <= huberDelta ? 0.5 * Math.pow(x - trueValue, 2) : huberDelta * (error - 0.5 * huberDelta);
+                
+                if (!data.length) {
+                    data.push({ mse: [mse], mae: [mae], huber: [huber] });
+                } else {
+                    data[0].mse.push(mse);
+                    data[0].mae.push(mae);
+                    data[0].huber.push(huber);
+                }
+            }
+            
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'MSE Loss',
+                        data: data[0].mse,
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 3,
+                        fill: false
+                    }, {
+                        label: 'MAE Loss',
+                        data: data[0].mae,
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        borderWidth: 3,
+                        fill: false
+                    }, {
+                        label: 'Huber Loss',
+                        data: data[0].huber,
+                        borderColor: '#feca57',
+                        backgroundColor: 'rgba(254, 202, 87, 0.1)',
+                        borderWidth: 3,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Loss Functions Comparison (True Value = 7.0)',
+                            color: '#333',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            labels: {
+                                color: '#333'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Predicted Value',
+                                color: '#333'
+                            },
+                            ticks: {
+                                color: '#333'
+                            },
+                            grid: {
+                                color: 'rgba(51, 51, 51, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Loss Value',
+                                color: '#333'
+                            },
+                            ticks: {
+                                color: '#333'
+                            },
+                            grid: {
+                                color: 'rgba(51, 51, 51, 0.1)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+        
+        function updateChart() {
+            if (chart) {
+                const predicted = parseFloat(predictionSlider.value);
+                const predictionIndex = Math.round(predicted * 10);
+                
+                // Update chart annotation or highlight current prediction
+                chart.update('none');
+            }
+        }
+        
+        // Initialize
+        updateLossValues();
+        initChart();
+    </script>
+</body>
+</html>

@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Networks in Healthcare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .slide {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .application-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e9ecef;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .application-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .app-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .medical-imaging .app-title {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .patient-prediction .app-title {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .clinical-support .app-title {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .drug-discovery .app-title {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+        }
+
+        .visualization-container {
+            position: relative;
+            height: 250px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .description {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #6c757d;
+            margin: 15px 0;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .metric-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .case-studies {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e9ecef;
+            margin-top: 40px;
+        }
+
+        .case-studies h2 {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .case-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .case-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .case-card p {
+            color: #6c757d;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .challenges-section {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 4px solid #2196f3;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .challenges-section h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .challenge-item {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #2196f3;
+        }
+
+        .challenge-item h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .challenge-item p {
+            color: #1565c0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .future-outlook {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            border-left: 4px solid #9c27b0;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .future-outlook h3 {
+            color: #7b1fa2;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .future-outlook p {
+            color: #6a1b9a;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .future-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .future-list li {
+            color: #6a1b9a;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .future-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #9c27b0;
+            font-weight: bold;
+        }
+
+        .interactive-demo {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #e9ecef;
+            margin-top: 40px;
+        }
+
+        .demo-title {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .demo-visualization {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #dee2e6;
+            min-height: 300px;
+        }
+
+        .demo-controls {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #dee2e6;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #dee2e6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .prediction-result {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .prediction-result h4 {
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+
+        .prediction-value {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <h1>Neural Networks in Healthcare</h1>
+        
+        <div class="applications-grid">
+            <div class="application-card medical-imaging">
+                <div class="app-title">Medical Image Analysis</div>
+                
+                <div class="visualization-container">
+                    <canvas class="canvas" id="imagingCanvas"></canvas>
+                </div>
+                
+                <div class="description">
+                    Neural networks excel at analyzing medical images (X-rays, MRIs, CT scans) to detect diseases, tumors, and abnormalities with high accuracy.
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">95.2%</div>
+                        <div class="metric-label">Accuracy</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">0.94</div>
+                        <div class="metric-label">AUC Score</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="analyzeImage()">Analyze Image</button>
+                    <button class="btn btn-primary" onclick="showHeatmap()">Show Heatmap</button>
+                </div>
+            </div>
+
+            <div class="application-card patient-prediction">
+                <div class="app-title">Patient Outcome Prediction</div>
+                
+                <div class="visualization-container">
+                    <canvas class="canvas" id="predictionCanvas"></canvas>
+                </div>
+                
+                <div class="description">
+                    Predict patient outcomes, readmission risk, and treatment response using electronic health records and clinical data.
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">87.5%</div>
+                        <div class="metric-label">Prediction Accuracy</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">0.89</div>
+                        <div class="metric-label">F1 Score</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="predictOutcome()">Predict Outcome</button>
+                    <button class="btn btn-primary" onclick="showRiskFactors()">Risk Factors</button>
+                </div>
+            </div>
+
+            <div class="application-card clinical-support">
+                <div class="app-title">Clinical Decision Support</div>
+                
+                <div class="visualization-container">
+                    <canvas class="canvas" id="decisionCanvas"></canvas>
+                </div>
+                
+                <div class="description">
+                    Assist clinicians with diagnosis, treatment recommendations, and drug interactions using patient data and medical knowledge.
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">92.1%</div>
+                        <div class="metric-label">Diagnosis Accuracy</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">3.2s</div>
+                        <div class="metric-label">Response Time</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="getDiagnosis()">Get Diagnosis</button>
+                    <button class="btn btn-primary" onclick="showRecommendations()">Recommendations</button>
+                </div>
+            </div>
+
+            <div class="application-card drug-discovery">
+                <div class="app-title">Drug Discovery & Development</div>
+                
+                <div class="visualization-container">
+                    <canvas class="canvas" id="drugCanvas"></canvas>
+                </div>
+                
+                <div class="description">
+                    Accelerate drug discovery by predicting molecular properties, drug-target interactions, and toxicity profiles.
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value">78.3%</div>
+                        <div class="metric-label">Success Rate</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">60%</div>
+                        <div class="metric-label">Time Reduction</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="predictEfficacy()">Predict Efficacy</button>
+                    <button class="btn btn-primary" onclick="showToxicity()">Toxicity Analysis</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="challenges-section">
+            <h3>Challenges in Healthcare AI</h3>
+            <div class="challenges-grid">
+                <div class="challenge-item">
+                    <h4>Data Privacy & Security</h4>
+                    <p>Patient data is highly sensitive and requires strict compliance with regulations like HIPAA and GDPR.</p>
+                </div>
+                <div class="challenge-item">
+                    <h4>Interpretability</h4>
+                    <p>Black-box models make it difficult for clinicians to trust and understand AI recommendations.</p>
+                </div>
+                <div class="challenge-item">
+                    <h4>Data Quality</h4>
+                    <p>Medical data is often incomplete, noisy, and biased, requiring extensive preprocessing.</p>
+                </div>
+                <div class="challenge-item">
+                    <h4>Regulatory Approval</h4>
+                    <p>AI systems in healthcare require rigorous validation and regulatory approval before clinical use.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="interactive-demo">
+            <div class="demo-title">Interactive Patient Risk Assessment</div>
+            <div class="demo-container">
+                <div class="demo-visualization">
+                    <canvas class="canvas" id="riskCanvas"></canvas>
+                </div>
+                <div class="demo-controls">
+                    <div class="control-group">
+                        <label for="age">Age: <span id="ageValue">50</span></label>
+                        <input type="range" id="age" min="18" max="90" value="50">
+                    </div>
+                    <div class="control-group">
+                        <label for="bmi">BMI: <span id="bmiValue">25</span></label>
+                        <input type="range" id="bmi" min="15" max="50" value="25">
+                    </div>
+                    <div class="control-group">
+                        <label for="bloodPressure">Blood Pressure: <span id="bpValue">120/80</span></label>
+                        <input type="range" id="bloodPressure" min="90" max="180" value="120">
+                    </div>
+                    <div class="control-group">
+                        <label for="cholesterol">Cholesterol: <span id="cholValue">200</span></label>
+                        <input type="range" id="cholesterol" min="100" max="400" value="200">
+                    </div>
+                    
+                    <div class="prediction-result">
+                        <h4>Cardiovascular Risk Prediction</h4>
+                        <div class="prediction-value" id="riskPrediction">Low Risk (15%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="future-outlook">
+            <h3>Future of AI in Healthcare</h3>
+            <p>The integration of neural networks in healthcare is rapidly evolving, with several promising developments on the horizon:</p>
+            <ul class="future-list">
+                <li><strong>Personalized Medicine:</strong> AI will enable truly personalized treatment plans based on individual genetic and clinical profiles.</li>
+                <li><strong>Early Detection:</strong> Advanced screening algorithms will detect diseases at their earliest, most treatable stages.</li>
+                <li><strong>Remote Monitoring:</strong> Wearable devices and AI will enable continuous health monitoring outside clinical settings.</li>
+                <li><strong>Drug Repurposing:</strong> AI will accelerate the discovery of new uses for existing drugs, reducing development costs.</li>
+                <li><strong>Clinical Trials:</strong> AI will optimize trial design and patient recruitment, making drug development more efficient.</li>
+            </ul>
+        </div>
+
+        <div class="case-studies">
+            <h2>Real-World Case Studies</h2>
+            <div class="case-grid">
+                <div class="case-card">
+                    <h3>Google DeepMind - Diabetic Retinopathy</h3>
+                    <p>Developed an AI system that detects diabetic retinopathy from retinal images with 94% accuracy, comparable to human ophthalmologists.</p>
+                </div>
+                <div class="case-card">
+                    <h3>IBM Watson - Oncology</h3>
+                    <p>Assists oncologists by analyzing patient data and medical literature to suggest personalized treatment options for cancer patients.</p>
+                </div>
+                <div class="case-card">
+                    <h3>Stanford - Pneumonia Detection</h3>
+                    <p>Created a deep learning model that detects pneumonia from chest X-rays with higher accuracy than radiologists in some cases.</p>
+                </div>
+                <div class="case-card">
+                    <h3>MIT - Sepsis Prediction</h3>
+                    <p>Developed an AI system that predicts sepsis up to 12 hours before clinical diagnosis, potentially saving thousands of lives annually.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HealthcareVisualizer {
+            constructor() {
+                this.initializeVisualizations();
+                this.setupEventListeners();
+            }
+
+            initializeVisualizations() {
+                this.drawMedicalImaging();
+                this.drawPatientPrediction();
+                this.drawClinicalDecision();
+                this.drawDrugDiscovery();
+                this.drawRiskAssessment();
+            }
+
+            setupEventListeners() {
+                // Risk assessment controls
+                document.getElementById('age').addEventListener('input', function() {
+                    document.getElementById('ageValue').textContent = this.value;
+                    visualizer.updateRiskAssessment();
+                });
+
+                document.getElementById('bmi').addEventListener('input', function() {
+                    document.getElementById('bmiValue').textContent = this.value;
+                    visualizer.updateRiskAssessment();
+                });
+
+                document.getElementById('bloodPressure').addEventListener('input', function() {
+                    const bp = this.value;
+                    document.getElementById('bpValue').textContent = `${bp}/${Math.round(bp * 0.67)}`;
+                    visualizer.updateRiskAssessment();
+                });
+
+                document.getElementById('cholesterol').addEventListener('input', function() {
+                    document.getElementById('cholValue').textContent = this.value;
+                    visualizer.updateRiskAssessment();
+                });
+            }
+
+            drawMedicalImaging() {
+                const canvas = document.getElementById('imagingCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw simulated X-ray
+                ctx.fillStyle = '#e0e0e0';
+                ctx.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+                
+                // Draw anatomical structures
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                
+                // Ribs
+                for (let i = 0; i < 5; i++) {
+                    const y = 60 + i * 30;
+                    ctx.beginPath();
+                    ctx.arc(100, y, 40, 0, Math.PI, true);
+                    ctx.stroke();
+                }
+                
+                // Heart shadow
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(120, 120, 25, 35, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Detection box
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(80, 100, 80, 60);
+                ctx.setLineDash([]);
+                
+                // Labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Chest X-ray', canvas.width / 2, 15);
+                ctx.fillText('AI Detection', canvas.width / 2, canvas.height - 10);
+            }
+
+            drawPatientPrediction() {
+                const canvas = document.getElementById('predictionCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const margin = 30;
+                const plotWidth = canvas.width - 2 * margin;
+                const plotHeight = canvas.height - 2 * margin;
+                
+                // Draw timeline
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(margin, canvas.height - margin);
+                ctx.lineTo(canvas.width - margin, canvas.height - margin);
+                ctx.stroke();
+                
+                // Draw risk curve
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                for (let i = 0; i < plotWidth; i++) {
+                    const x = margin + i;
+                    const progress = i / plotWidth;
+                    const risk = 0.1 + 0.4 * Math.sin(progress * Math.PI * 2) + 0.2 * Math.random();
+                    const y = canvas.height - margin - risk * plotHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw prediction point
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(canvas.width - margin - 20, canvas.height - margin - 100, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Time', canvas.width / 2, canvas.height - 10);
+                ctx.fillText('Risk Score', 15, canvas.height / 2);
+            }
+
+            drawClinicalDecision() {
+                const canvas = document.getElementById('decisionCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw decision tree
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                // Root node
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.arc(centerX, 50, 30, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Symptoms', centerX, 55);
+                
+                // Decision nodes
+                const leftX = centerX - 80;
+                const rightX = centerX + 80;
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(leftX, centerY, 25, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('Test A', leftX, centerY + 4);
+                
+                ctx.fillStyle = '#27ae60';
+                ctx.beginPath();
+                ctx.arc(rightX, centerY, 25, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('Test B', rightX, centerY + 4);
+                
+                // Outcomes
+                ctx.fillStyle = '#9b59b6';
+                ctx.beginPath();
+                ctx.arc(leftX - 40, canvas.height - 50, 20, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 8px Arial';
+                ctx.fillText('Treatment A', leftX - 40, canvas.height - 50 + 3);
+                
+                ctx.fillStyle = '#f39c12';
+                ctx.beginPath();
+                ctx.arc(rightX + 40, canvas.height - 50, 20, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('Treatment B', rightX + 40, canvas.height - 50 + 3);
+                
+                // Connect lines
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, 80);
+                ctx.lineTo(leftX, centerY - 25);
+                ctx.moveTo(centerX, 80);
+                ctx.lineTo(rightX, centerY - 25);
+                ctx.moveTo(leftX, centerY + 25);
+                ctx.lineTo(leftX - 40, canvas.height - 70);
+                ctx.moveTo(rightX, centerY + 25);
+                ctx.lineTo(rightX + 40, canvas.height - 70);
+                ctx.stroke();
+            }
+
+            drawDrugDiscovery() {
+                const canvas = document.getElementById('drugCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw molecular structure
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                // Central atom
+                ctx.fillStyle = '#3498db';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Connected atoms
+                const atoms = [
+                    {x: centerX - 40, y: centerY - 30, color: '#e74c3c'},
+                    {x: centerX + 40, y: centerY - 30, color: '#27ae60'},
+                    {x: centerX - 30, y: centerY + 40, color: '#f39c12'},
+                    {x: centerX + 30, y: centerY + 40, color: '#9b59b6'}
+                ];
+                
+                atoms.forEach(atom => {
+                    ctx.fillStyle = atom.color;
+                    ctx.beginPath();
+                    ctx.arc(atom.x, atom.y, 12, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Connection line
+                    ctx.strokeStyle = '#2c3e50';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(atom.x, atom.y);
+                    ctx.stroke();
+                });
+                
+                // Efficacy indicator
+                ctx.fillStyle = 'rgba(39, 174, 96, 0.3)';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 60, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Drug Molecule', canvas.width / 2, 20);
+                ctx.fillText('High Efficacy', canvas.width / 2, canvas.height - 15);
+            }
+
+            drawRiskAssessment() {
+                const canvas = document.getElementById('riskCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const margin = 30;
+                const plotWidth = canvas.width - 2 * margin;
+                const plotHeight = canvas.height - 2 * margin;
+                
+                // Draw risk zones
+                ctx.fillStyle = 'rgba(39, 174, 96, 0.2)'; // Green - low risk
+                ctx.fillRect(margin, margin, plotWidth, plotHeight * 0.3);
+                
+                ctx.fillStyle = 'rgba(243, 156, 18, 0.2)'; // Orange - medium risk
+                ctx.fillRect(margin, margin + plotHeight * 0.3, plotWidth, plotHeight * 0.4);
+                
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.2)'; // Red - high risk
+                ctx.fillRect(margin, margin + plotHeight * 0.7, plotWidth, plotHeight * 0.3);
+                
+                // Draw axes
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, canvas.height - margin);
+                ctx.moveTo(margin, canvas.height - margin);
+                ctx.lineTo(canvas.width - margin, canvas.height - margin);
+                ctx.stroke();
+                
+                // Draw patient point
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(margin + plotWidth * 0.6, canvas.height - margin - plotHeight * 0.4, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Labels
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Risk Factors', canvas.width / 2, canvas.height - 10);
+                ctx.fillText('Risk Level', 15, canvas.height / 2);
+                
+                ctx.fillText('Low', canvas.width / 2, margin + 15);
+                ctx.fillText('Medium', canvas.width / 2, margin + plotHeight * 0.5);
+                ctx.fillText('High', canvas.width / 2, margin + plotHeight * 0.85);
+            }
+
+            updateRiskAssessment() {
+                const age = parseInt(document.getElementById('age').value);
+                const bmi = parseInt(document.getElementById('bmi').value);
+                const bp = parseInt(document.getElementById('bloodPressure').value);
+                const cholesterol = parseInt(document.getElementById('cholesterol').value);
+                
+                // Simple risk calculation
+                let risk = 0;
+                risk += (age - 30) * 0.01;
+                risk += Math.max(0, (bmi - 25) * 0.02);
+                risk += Math.max(0, (bp - 120) * 0.005);
+                risk += Math.max(0, (cholesterol - 200) * 0.001);
+                
+                risk = Math.max(0, Math.min(1, risk));
+                
+                let riskLevel, riskColor;
+                if (risk < 0.3) {
+                    riskLevel = 'Low Risk';
+                    riskColor = '#27ae60';
+                } else if (risk < 0.6) {
+                    riskLevel = 'Medium Risk';
+                    riskColor = '#f39c12';
+                } else {
+                    riskLevel = 'High Risk';
+                    riskColor = '#e74c3c';
+                }
+                
+                const riskPercent = Math.round(risk * 100);
+                document.getElementById('riskPrediction').textContent = `${riskLevel} (${riskPercent}%)`;
+                document.getElementById('riskPrediction').style.color = riskColor;
+                
+                this.drawRiskAssessment();
+            }
+        }
+
+        const visualizer = new HealthcareVisualizer();
+
+        function analyzeImage() {
+            alert('AI analysis complete: No abnormalities detected in chest X-ray.');
+        }
+
+        function showHeatmap() {
+            alert('Heatmap generated: Areas of interest highlighted for radiologist review.');
+        }
+
+        function predictOutcome() {
+            alert('Patient outcome prediction: 85% probability of successful recovery with current treatment plan.');
+        }
+
+        function showRiskFactors() {
+            alert('Key risk factors identified: Age, smoking history, and family history of cardiovascular disease.');
+        }
+
+        function getDiagnosis() {
+            alert('AI diagnosis: Likely bacterial pneumonia. Recommended: Chest X-ray confirmation and antibiotic treatment.');
+        }
+
+        function showRecommendations() {
+            alert('Treatment recommendations: Amoxicillin 500mg TID for 7 days, follow-up in 48 hours.');
+        }
+
+        function predictEfficacy() {
+            alert('Drug efficacy prediction: 78% probability of successful treatment with minimal side effects.');
+        }
+
+        function showToxicity() {
+            alert('Toxicity analysis: Low risk of adverse effects. Monitor liver function during treatment.');
+        }
+    </script>
+</body>
+</html>

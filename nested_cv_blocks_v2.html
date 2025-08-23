@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nested Cross-Validation — Clear Steps</title>
+<style>
+  :root{
+    --page-bg:#f8fafc;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+
+    --header-bg:#f1f5f9;
+    --header-text:#334155;
+
+    --train:#dcfce7;       /* light green */
+    --train-border:#22c55e;
+    --val:#dbeafe;         /* light blue */
+    --val-border:#3b82f6;
+    --test:#fef3c7;        /* light yellow */
+    --test-border:#f59e0b;
+
+    --active-outline:#ef4444;
+    --chip:#e0e7ff;
+    --chip-text:#3730a3;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Ubuntu,sans-serif;line-height:1.6}
+  .wrap{max-width:1400px;margin:0 auto;padding:32px}
+  h1{margin:0 0 8px;font-size:clamp(32px,4vw,48px);font-weight:700;color:#1e293b}
+  .subtitle{color:var(--muted); margin:0 0 24px;font-size:18px;line-height:1.5}
+  .controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;color:var(--muted);margin-bottom:24px;padding:20px;background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+  .controls label{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .controls input[type="range"]{width:200px;height:6px;border-radius:3px;background:#e2e8f0;outline:none}
+  .controls input[type="range"]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;cursor:pointer}
+  .controls select,.controls button{border:2px solid var(--border); background:#fff; color:var(--text); padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer;font-size:14px;transition:all 0.2s}
+  .controls select:hover,.controls button:hover{background:#f8fafc;border-color:#cbd5e1}
+  .controls button{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .controls button:hover{background:#2563eb;border-color:#2563eb}
+  .layout{display:grid; grid-template-columns: 2fr 1fr; gap:24px; align-items:start}
+  .diagram{background:#fff; padding:28px; border-radius:20px; border:1px solid var(--border); position:relative;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+  .panel{background:#fff; padding:24px; border-radius:20px; border:1px solid var(--border);box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+
+  .step{display:flex; align-items:center; gap:12px; margin:12px 0 16px}
+  .badge{background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; border-radius:50%; font-weight:800; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:16px;box-shadow:0 2px 4px rgba(59,130,246,0.3)}
+  .title{font-weight:700; color:#1e293b;font-size:18px}
+
+  .bar{height:60px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--header-text); border:2px solid #cbd5e1; background:var(--header-bg);font-size:14px}
+  .bar .label{display:flex; flex-direction:column; align-items:center; line-height:1.2}
+  .bar .sub{font-weight:600; font-size:12px; color:#64748b;margin-top:2px}
+  .bar + .bar{margin-top:16px}
+
+  .rows{margin-top:16px; display:grid; gap:12px}
+  .row{display:grid; grid-template-columns:repeat(var(--k,5), 1fr); gap:12px; align-items:center}
+  .pill{
+    height:52px; display:flex; align-items:center; justify-content:center;
+    border-radius:12px; font-weight:700; color:#1e293b; background:#fff; border:2px solid #cbd5e1;
+    font-size:14px;transition:all 0.2s;cursor:pointer
+  }
+  .pill:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,0.1)}
+  .pill.header{background:var(--header-bg); color:var(--header-text);font-weight:800}
+  .pill.train{background:var(--train); border-color:var(--train-border);color:#166534}
+  .pill.val{background:var(--val); border-color:var(--val-border);color:#1e40af}
+  .pill.test{background:var(--test); border-color:var(--test-border);color:#92400e}
+
+  .active-row{outline:3px dashed var(--active-outline); outline-offset:6px;border-radius:16px;padding:4px}
+
+  .legend{display:flex; gap:16px; align-items:center; color:var(--muted); font-size:15px; margin-top:20px; flex-wrap:wrap;padding:16px;background:#f8fafc;border-radius:12px}
+  .dot{width:16px;height:16px;border-radius:6px; display:inline-block; margin-right:8px; border:2px solid var(--border)}
+  .legend .lg{display:flex; align-items:center;font-weight:600}
+
+  .stats{font-size:15px; color:var(--muted)}
+  .stats table{width:100%; border-collapse:collapse; margin-top:12px; font-size:14px}
+  .stats th,.stats td{border-bottom:1px solid var(--border); padding:12px 8px; text-align:right}
+  .stats th:first-child,.stats td:first-child{text-align:left;font-weight:600}
+  .stats th{background:#f8fafc;font-weight:700;color:#374151}
+  .chip{display:inline-block; background:var(--chip); color:var(--chip-text); padding:4px 12px; border-radius:20px; font-weight:700; font-size:13px}
+  .hint{font-size:14px; color:var(--muted); margin-top:12px;line-height:1.5;padding:12px;background:#f8fafc;border-radius:8px;border-left:4px solid #3b82f6}
+  .grid2{display:grid; grid-template-columns: 7fr 6fr; gap:20px; margin-top:8px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Nested Cross-Validation (Outer → Inner)</h1>
+    <p class="subtitle">Outer CV gives an unbiased estimate on truly unseen data. Inner CV tunes hyperparameters <b>only</b> on the outer-train split.</p>
+    
+    <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:24px;border-radius:16px;border-left:6px solid #0284c7;margin-bottom:24px;">
+      <h3 style="margin:0 0 12px;color:#0c4a6e;font-size:20px;">🎯 Why Nested Cross-Validation?</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;color:#0c4a6e;">
+        <div>
+          <strong>Problem with Regular CV:</strong>
+          <ul style="margin:8px 0;padding-left:20px;">
+            <li>Hyperparameter tuning uses the same data for selection and evaluation</li>
+            <li>Leads to <em>optimistic bias</em> - overestimating performance</li>
+            <li>Model selection and performance estimation are not independent</li>
+          </ul>
+        </div>
+        <div>
+          <strong>Solution with Nested CV:</strong>
+          <ul style="margin:8px 0;padding-left:20px;">
+            <li><strong>Outer loop:</strong> Provides unbiased performance estimation</li>
+            <li><strong>Inner loop:</strong> Tunes hyperparameters on training data only</li>
+            <li>Each outer test fold is truly unseen during model selection</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label>K (outer):
+        <select id="kOuterSel">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+      <label>K (inner):
+        <select id="kInnerSel">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+      <label>Samples: <input id="nRange" type="range" min="300" max="6000" step="100" value="3000"> <span id="nVal">3000</span></label>
+      <button id="animInnerBtn">▶ Animate inner</button>
+      <button id="stepInnerBtn">Step inner</button>
+      <button id="nextOuterBtn">Next outer</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="layout">
+      <div class="diagram">
+        <div class="step"><span class="badge">1</span><div class="title">Choose outer test fold</div></div>
+        <div style="background:#f8fafc;padding:16px;border-radius:12px;margin-bottom:16px;border-left:4px solid #22c55e;">
+          <p style="margin:0;color:#166534;font-size:14px;"><strong>Step 1 Explanation:</strong> We start by dividing the entire dataset into K outer folds. One fold becomes the <strong>test set</strong> (yellow), while the remaining K-1 folds become the <strong>training set</strong> (green). This outer test fold will be held out completely and never used for model selection or hyperparameter tuning.</p>
+        </div>
+        <div id="outerRow" class="row" style="--k:5"></div>
+
+        <div class="grid2">
+          <div>
+            <div class="step"><span class="badge">2</span><div class="title">Run inner CV on the outer-train portion</div></div>
+            <div style="background:#f0f9ff;padding:16px;border-radius:12px;margin-bottom:16px;border-left:4px solid #3b82f6;">
+              <p style="margin:0;color:#1e40af;font-size:14px;"><strong>Step 2 Explanation:</strong> On the outer training data (green), we perform <strong>inner cross-validation</strong> to tune hyperparameters. Each inner fold uses a portion of the outer training data for validation (blue) while training on the rest (green). This ensures hyperparameter selection happens <em>only</em> on training data, never touching the outer test fold.</p>
+            </div>
+            <div id="innerHeader" class="row" style="--k:5"></div>
+            <div id="innerRows"></div>
+          </div>
+          <div>
+            <div class="step"><span class="badge">3</span><div class="title">This iteration (whole dataset)</div></div>
+            <div style="background:#fef3c7;padding:16px;border-radius:12px;margin-bottom:16px;border-left:4px solid #f59e0b;">
+              <p style="margin:0;color:#92400e;font-size:14px;"><strong>Step 3 Explanation:</strong> This shows how the current data split uses the entire dataset. The <strong>outer test fold</strong> (yellow) is completely held out. The <strong>inner validation</strong> (blue) is used only for hyperparameter tuning, and the <strong>training data</strong> (green) is used for model fitting.</p>
+            </div>
+            <div class="bar" id="wholeBar" style="display:grid; grid-template-columns:33% 33% 34%; gap:12px; background:#fff">
+              <div class="bar train" id="trainUsed"><div class="label"><div>Train used</div><div class="sub" id="trainUsedSub">—</div></div></div>
+              <div class="bar val" id="innerVal"><div class="label"><div>Inner validation</div><div class="sub" id="innerValSub">—</div></div></div>
+              <div class="bar test" id="outerTest"><div class="label"><div>Outer test</div><div class="sub" id="outerTestSub">—</div></div></div>
+            </div>
+            <div class="hint">Green + Blue + Yellow = 100% of the data for this outer/inner step.</div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="dot" style="background:var(--train)"></span>Training (Model fitting)</span>
+          <span class="lg"><span class="dot" style="background:var(--val)"></span>Validation (Hyperparameter tuning)</span>
+          <span class="lg"><span class="dot" style="background:var(--test)"></span>Outer test (Performance evaluation)</span>
+          <span class="lg"><span class="dot" style="background:var(--header-bg)"></span>Header (Fold labels)</span>
+        </div>
+        
+        <div style="background:#f8fafc;padding:16px;border-radius:12px;margin-top:16px;border:1px solid #e2e8f0;">
+          <h4 style="margin:0 0 8px;color:#374151;font-size:15px;">💡 Key Benefits:</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:13px;color:#64748b;">
+            <div><strong>🎯 Unbiased Estimation:</strong> Outer test folds are never used for model selection</div>
+            <div><strong>🔒 No Data Leakage:</strong> Hyperparameter tuning is completely independent of final evaluation</div>
+            <div><strong>📊 Reliable Metrics:</strong> Performance estimates reflect real-world generalization</div>
+            <div><strong>⚖️ Fair Comparison:</strong> Different models can be compared fairly</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel stats">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <b style="font-size:18px;color:#1e293b">Counts</b>
+          <span class="chip">Outer iter <span id="outerIterLabel">1</span>/<span id="kOuterLabel">5</span> • Inner <span id="innerIterLabel">1</span>/<span id="kInnerLabel">5</span></span>
+        </div>
+        <div id="counts"></div>
+        <hr style="border:0;border-top:1px solid var(--border); margin:20px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <b style="font-size:18px;color:#1e293b">Outer test performance</b>
+          <span class="chip" id="summaryBadge">Mean —</span>
+        </div>
+        <table id="perfTable">
+          <thead>
+            <tr><th>Outer iter</th><th>Best hyperparam</th><th>Outer test score</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="hint">Inner CV chooses the best hyperparameter using only the outer‑train data. We then retrain on the full outer‑train with that hyperparameter and evaluate once on the outer‑test.</div>
+        
+        <div style="background:linear-gradient(135deg,#fef7ed,#fed7aa);padding:20px;border-radius:16px;margin-top:20px;border-left:6px solid #ea580c;">
+          <h4 style="margin:0 0 12px;color:#9a3412;font-size:16px;">🔄 Complete Process Flow:</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;color:#9a3412;font-size:14px;">
+            <div>
+              <strong>For each outer fold (K times):</strong>
+              <ol style="margin:8px 0;padding-left:20px;">
+                <li>Hold out one fold as outer test set</li>
+                <li>Use remaining folds for outer training</li>
+                <li>Perform inner CV on outer training data</li>
+                <li>Select best hyperparameters</li>
+                <li>Train final model on full outer training data</li>
+                <li>Evaluate on outer test set</li>
+              </ol>
+            </div>
+            <div>
+              <strong>Final Results:</strong>
+              <ul style="margin:8px 0;padding-left:20px;">
+                <li>K unbiased performance estimates</li>
+                <li>Mean and standard deviation of performance</li>
+                <li>Confidence interval for model performance</li>
+                <li>No data leakage between selection and evaluation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const kOuterSel = document.getElementById('kOuterSel');
+  const kInnerSel = document.getElementById('kInnerSel');
+  const nRange = document.getElementById('nRange'); const nVal = document.getElementById('nVal');
+
+  const outerRow = document.getElementById('outerRow');
+
+  const innerHeader = document.getElementById('innerHeader');
+  const innerRows = document.getElementById('innerRows');
+
+  const wholeBar = document.getElementById('wholeBar');
+  const trainUsedSub = document.getElementById('trainUsedSub');
+  const innerValSub = document.getElementById('innerValSub');
+  const outerTestSub = document.getElementById('outerTestSub');
+
+  const countsDiv = document.getElementById('counts');
+  const perfTable = document.getElementById('perfTable').querySelector('tbody');
+  const summaryBadge = document.getElementById('summaryBadge');
+
+  const outerIterLabel = document.getElementById('outerIterLabel');
+  const innerIterLabel = document.getElementById('innerIterLabel');
+  const kOuterLabel = document.getElementById('kOuterLabel');
+  const kInnerLabel = document.getElementById('kInnerLabel');
+
+  const animInnerBtn = document.getElementById('animInnerBtn');
+  const stepInnerBtn = document.getElementById('stepInnerBtn');
+  const nextOuterBtn = document.getElementById('nextOuterBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  let KOuter = parseInt(kOuterSel.value,10);
+  let KInner = parseInt(kInnerSel.value,10);
+  let N = parseInt(nRange.value,10);
+
+  let outerIdx = 0; // which outer fold is test
+  let innerIdx = 0; // which inner fold is validation (inside outer-train)
+  let tmr = null;
+  let outerScores = []; // per outer iteration
+  let bestParams = [];  // chosen hyperparam per outer iteration
+
+  function fmtPct(x){ return (Math.round(x*10)/10)+'%'; }
+  function rnd(seed){ let x=Math.sin(seed)*10000; return x-Math.floor(x); }
+
+  function buildOuterRow(){
+    outerRow.style.setProperty('--k', KOuter);
+    outerRow.innerHTML='';
+    for(let c=0;c<KOuter;c++){
+      const div = document.createElement('div');
+      div.className = 'pill ' + (c===outerIdx ? 'test' : 'train');
+      div.textContent = 'Fold ' + (c+1);
+      div.title = c===outerIdx ? 'Outer TEST fold' : 'Outer TRAIN fold';
+      div.onclick = ()=>{ outerIdx=c; innerIdx=0; refreshAll(); };
+      outerRow.appendChild(div);
+    }
+    outerIterLabel.textContent = (outerIdx+1);
+    kOuterLabel.textContent = KOuter;
+  }
+
+  function buildInnerGrid(){
+    kInnerLabel.textContent = KInner;
+    innerHeader.style.setProperty('--k', KInner);
+    innerHeader.innerHTML='';
+    for(let c=0;c<KInner;c++){
+      const p=document.createElement('div');
+      p.className='pill header'; p.textContent='Inner ' + (c+1);
+      innerHeader.appendChild(p);
+    }
+    innerRows.innerHTML='';
+    for(let r=0;r<KInner;r++){
+      const row=document.createElement('div');
+      row.className='row' + (r===innerIdx ? ' active-row' : '');
+      row.style.setProperty('--k', KInner);
+      for(let c=0;c<KInner;c++){
+        const p=document.createElement('div');
+        p.className='pill ' + (c===r ? 'val' : 'train');
+        p.textContent='Inner ' + (c+1);
+        row.appendChild(p);
+      }
+      innerRows.appendChild(row);
+    }
+    innerIterLabel.textContent = (innerIdx+1);
+  }
+
+  function updateWholeBar(){
+    const outerTestPct = 100 / KOuter;
+    const outerTrainPct = 100 - outerTestPct;
+    const innerValPct = outerTrainPct / KInner;
+    const innerTrainUsedPct = outerTrainPct - innerValPct;
+    wholeBar.style.gridTemplateColumns = innerTrainUsedPct+'% '+innerValPct+'% '+outerTestPct+'%';
+    // counts
+    const outerTestN = Math.floor(N / KOuter);
+    const outerTrainN = N - outerTestN;
+    const innerValN = Math.floor(outerTrainN / KInner);
+    const innerTrainUsedN = outerTrainN - innerValN;
+    trainUsedSub.textContent = fmtPct(innerTrainUsedPct)+' • '+innerTrainUsedN;
+    innerValSub.textContent   = fmtPct(innerValPct)+' • '+innerValN;
+    outerTestSub.textContent  = fmtPct(outerTestPct)+' • '+outerTestN;
+  }
+
+  function renderCounts(){
+    const outerTestN = Math.floor(N / KOuter);
+    const outerTrainN = N - outerTestN;
+    const innerValN = Math.floor(outerTrainN / KInner);
+    const innerTrainUsedN = outerTrainN - innerValN;
+    countsDiv.innerHTML = `
+      <div>Total samples: <b>${N}</b></div>
+      <div>Outer train: <b>${outerTrainN}</b> (${fmtPct(100 - 100/KOuter)})</div>
+      <div>Outer test: <b>${outerTestN}</b> (${fmtPct(100/KOuter)})</div>
+      <div style="margin-top:6px">Inner (on the outer-train):</div>
+      <div>• Train used this inner fold: <b>${innerTrainUsedN}</b> (${fmtPct((100 - 100/KOuter) * (KInner-1)/KInner)})</div>
+      <div>• Validation (inner): <b>${innerValN}</b> (${fmtPct((100 - 100/KOuter) / KInner)})</div>
+    `;
+  }
+
+  function chooseBestHyperparam(){
+    const candidates = ['λ=0.01','λ=0.1','λ=1','λ=10'];
+    const outerTrainFrac = 1 - 1/KOuter;
+    const base = 0.78 + 0.18*outerTrainFrac - 0.02*Math.log10(KInner);
+    const scores = candidates.map((c,idx)=>{
+      const bias = -0.015 + 0.015*idx;
+      const noise = (rnd( (outerIdx+1)*100 + idx*13 ) - 0.5)*0.03;
+      return Math.max(0, Math.min(1, base + bias + noise));
+    });
+    const bestIdx = scores.indexOf(Math.max(...scores));
+    return {param: candidates[bestIdx], innerMean: scores[bestIdx]};
+  }
+
+  function evaluateOuterTest(best){
+    const drop = 0.01 + (1/(KInner*20));
+    const noise = (rnd( (outerIdx+1)*777 ) - 0.5)*0.02;
+    return Math.max(0, Math.min(1, best.innerMean - drop + noise));
+  }
+
+  function finalizeOuterIteration(){
+    const best = chooseBestHyperparam();
+    const score = evaluateOuterTest(best);
+    bestParams[outerIdx] = best.param;
+    outerScores[outerIdx] = score;
+  }
+
+  function renderPerfTable(){
+    perfTable.innerHTML = '';
+    for(let i=0;i<KOuter;i++){
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.textContent = (i+1);
+      const td2 = document.createElement('td'); td2.textContent = bestParams[i] ? bestParams[i] : '—';
+      const td3 = document.createElement('td'); td3.textContent = outerScores[i]!=null ? (outerScores[i]*100).toFixed(1)+'%' : '—';
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+      perfTable.appendChild(tr);
+    }
+    const filled = outerScores.filter(x=>x!=null);
+    if(filled.length){
+      const mean = filled.reduce((a,b)=>a+b,0)/filled.length;
+      const sd = Math.sqrt(filled.reduce((s,v)=>s+(v-mean)*(v-mean),0)/filled.length);
+      summaryBadge.textContent = 'Mean '+(mean*100).toFixed(1)+'% • SD '+(sd*100).toFixed(1)+'%';
+    }else{
+      summaryBadge.textContent = 'Mean —';
+    }
+  }
+
+  function stepInner(){
+    innerIdx = (innerIdx + 1) % KInner;
+    const rows = innerRows.children;
+    for(let r=0;r<KInner;r++){
+      const row = rows[r];
+      const pills = row.children;
+      for(let c=0;c<KInner;c++){
+        pills[c].className = 'pill ' + (c===r ? 'val' : 'train');
+      }
+      row.classList.toggle('active-row', r===innerIdx);
+    }
+    innerIterLabel.textContent = (innerIdx+1);
+    updateWholeBar();
+  }
+
+  function toggleAnim(){
+    if(tmr){ clearInterval(tmr); tmr=null; animInnerBtn.textContent='▶ Animate inner'; return; }
+    animInnerBtn.textContent='⏸ Pause inner';
+    tmr = setInterval(stepInner, 900);
+  }
+
+  function nextOuter(){
+    if(tmr){ toggleAnim(); }
+    finalizeOuterIteration();
+    renderPerfTable();
+    outerIdx = (outerIdx + 1) % KOuter;
+    innerIdx = 0;
+    refreshAll();
+  }
+
+  function refreshAll(){
+    buildOuterRow();
+    buildInnerGrid();
+    updateWholeBar();
+    renderCounts();
+  }
+
+  function reset(){
+    if(tmr){ toggleAnim(); }
+    outerScores = new Array(KOuter).fill(null);
+    bestParams = new Array(KOuter).fill(null);
+    outerIdx = 0; innerIdx = 0;
+    refreshAll();
+    renderPerfTable();
+  }
+
+  // Bindings
+  kOuterSel.onchange = ()=>{ KOuter = parseInt(kOuterSel.value,10); reset(); };
+  kInnerSel.onchange = ()=>{ KInner = parseInt(kInnerSel.value,10); reset(); };
+  nRange.oninput = ()=>{ N = parseInt(nRange.value,10); nVal.textContent=N; refreshAll(); };
+  animInnerBtn.onclick = ()=> toggleAnim();
+  stepInnerBtn.onclick = ()=> stepInner();
+  nextOuterBtn.onclick = ()=> nextOuter();
+  resetBtn.onclick = ()=> reset();
+
+  // init
+  nVal.textContent = N; reset();
+})();
+</script>
+</body>
+</html>

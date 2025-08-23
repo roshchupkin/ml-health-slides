@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ML Hyperparameters Guide - Healthcare Focus</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #2c3e50;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin: 2rem 0;
+    }
+
+    .stat {
+      text-align: center;
+      color: white;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .models-grid {
+      display: grid;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .model-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .model-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    }
+
+    .model-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e1e8ed;
+    }
+
+    .model-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      font-size: 1.5rem;
+      color: white;
+      font-weight: bold;
+    }
+
+    .linear { background: linear-gradient(45deg, #FF6B6B, #4ECDC4); }
+    .logistic { background: linear-gradient(45deg, #4ECDC4, #45B7D1); }
+    .naive { background: linear-gradient(45deg, #96CEB4, #FECA57); }
+    .tree { background: linear-gradient(45deg, #FECA57, #FF9FF3); }
+    .forest { background: linear-gradient(45deg, #54A0FF, #5F27CD); }
+    .svm { background: linear-gradient(45deg, #A8E6CF, #FF8B94); }
+
+    .model-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    .model-type {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hyperparameters {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .hyperparam {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border-left: 4px solid #3498db;
+      transition: all 0.2s ease;
+    }
+
+    .hyperparam:hover {
+      background: #e8f4f8;
+      transform: translateX(5px);
+    }
+
+    .hyperparam-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2980b9;
+      margin-bottom: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+
+    .hyperparam-control {
+      color: #34495e;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .hyperparam-importance {
+      color: #7f8c8d;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .healthcare-note {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 2rem;
+      margin: 2rem 0;
+      border-left: 5px solid #e74c3c;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .healthcare-note h3 {
+      color: #e74c3c;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+
+    .search-filter {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #e1e8ed;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .stats-bar {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧠 ML Hyperparameters Guide</h1>
+      <p>Master the essential hyperparameters for machine learning models in healthcare applications. This comprehensive guide covers the most important parameters that control model behavior, performance, and generalization.</p>
+      
+      <div class="stats-bar">
+        <div class="stat">
+          <span class="stat-number">6</span>
+          <span class="stat-label">Model Types</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">25+</span>
+          <span class="stat-label">Hyperparameters</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">Healthcare</span>
+          <span class="stat-label">Focused</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-filter">
+      <input type="text" class="search-input" placeholder="🔍 Search for models or hyperparameters..." id="searchInput">
+    </div>
+
+    <div class="healthcare-note">
+      <h3>🏥 Healthcare Context</h3>
+      <p>In healthcare ML applications, hyperparameter tuning is crucial for model reliability and interpretability. Proper regularization helps prevent overfitting on limited patient data, while balanced complexity ensures models generalize well across diverse populations and clinical settings. Feature selection and engineering are particularly critical given the high-dimensional nature of medical data (genomics, imaging, EHRs).</p>
+    </div>
+
+    <!-- Feature Engineering Section -->
+    <div class="model-card fade-in" data-model="feature engineering selection">
+      <div class="model-header">
+        <div class="model-icon" style="background: linear-gradient(45deg, #FF6B6B, #FFE66D);">FE</div>
+        <div>
+          <div class="model-title">Feature Engineering & Selection</div>
+          <div class="model-type">Preprocessing • Critical</div>
+        </div>
+      </div>
+      <div class="hyperparameters">
+        <div class="hyperparam">
+          <div class="hyperparam-name">n_features</div>
+          <div class="hyperparam-control">Number of features to select from available dataset</div>
+          <div class="hyperparam-importance">In healthcare: Balance between information richness and model interpretability. Too many features can lead to overfitting with limited patient samples</div>
+        </div>
+        <div class="hyperparam">
+          <div class="hyperparam-name">feature_selection_method</div>
+          <div class="hyperparam-control">Method for selecting features (univariate, RFE, LASSO-based, mutual information)</div>
+          <div class="hyperparam-importance">Critical for genomics data with 20K+ genes, or EHR data with thousands of variables. Method affects model interpretability and performance</div>
+        </div>
+        <div class="hyperparam">
+          <div class="hyperparam-name">variance_threshold</div>
+          <div class="hyperparam-control">Minimum variance required to keep a feature</div>
+          <div class="hyperparam-importance">Removes near-constant features common in medical data (e.g., rare conditions that are almost always absent)</div>
+        </div>
+        <div class="hyperparam">
+          <div class="hyperparam-name">correlation_threshold</div>
+          <div class="hyperparam-control">Maximum correlation allowed between features</div>
+          <div class="hyperparam-importance">Removes redundant biomarkers or correlated lab values that don't add predictive value</div>
+        </div>
+        <div class="hyperparam">
+          <div class="hyperparam-name">feature_engineering_depth</div>
+          <div class="hyperparam-control">Level of feature engineering (polynomial, interactions, domain-specific)</div>
+          <div class="hyperparam-importance">Medical ratios (e.g., LDL/HDL), age-adjusted values, and clinical scores often outperform raw measurements</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="models-grid" id="modelsGrid">
+      <!-- Linear Regression -->
+      <div class="model-card fade-in" data-model="linear regression">
+        <div class="model-header">
+          <div class="model-icon linear">LR</div>
+          <div>
+            <div class="model-title">Linear Regression</div>
+            <div class="model-type">Regularized • Regression</div>
+          </div>
+        </div>
+        <div class="hyperparameters">
+          <div class="hyperparam">
+            <div class="hyperparam-name">alpha</div>
+            <div class="hyperparam-control">Strength of regularization (penalty on large coefficients)</div>
+            <div class="hyperparam-importance">Prevents overfitting and shrinks irrelevant features, especially critical in high-dimensional medical datasets with many biomarkers</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">penalty</div>
+            <div class="hyperparam-control">Type of regularization: L1 (Lasso), L2 (Ridge), or ElasticNet</div>
+            <div class="hyperparam-importance">L1 performs automatic feature selection (eliminates irrelevant genes/markers); L2 shrinks weights smoothly for stability</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">l1_ratio</div>
+            <div class="hyperparam-control">ElasticNet mixing parameter (balance between L1 and L2)</div>
+            <div class="hyperparam-importance">Combines feature selection (L1) with stability (L2), ideal for high-dimensional medical data with correlated features</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logistic Regression -->
+      <div class="model-card fade-in" data-model="logistic regression">
+        <div class="model-header">
+          <div class="model-icon logistic">LG</div>
+          <div>
+            <div class="model-title">Logistic Regression</div>
+            <div class="model-type">Classification • Probabilistic</div>
+          </div>
+        </div>
+        <div class="hyperparameters">
+          <div class="hyperparam">
+            <div class="hyperparam-name">C</div>
+            <div class="hyperparam-control">Inverse of regularization strength (smaller C = stronger penalty)</div>
+            <div class="hyperparam-importance">Essential for balancing bias-variance tradeoff, especially with imbalanced medical datasets (rare diseases)</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">solver</div>
+            <div class="hyperparam-control">Optimization algorithm (liblinear, saga, lbfgs)</div>
+            <div class="hyperparam-importance">Choice affects convergence speed and memory usage with large patient databases</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">class_weight</div>
+            <div class="hyperparam-control">Weights for different classes ('balanced', custom weights)</div>
+            <div class="hyperparam-importance">Critical for imbalanced medical datasets where diseases are rare (e.g., 1% cancer cases)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Naive Bayes -->
+      <div class="model-card fade-in" data-model="naive bayes">
+        <div class="model-header">
+          <div class="model-icon naive">NB</div>
+          <div>
+            <div class="model-title">Naive Bayes</div>
+            <div class="model-type">Probabilistic • Fast</div>
+          </div>
+        </div>
+        <div class="hyperparameters">
+          <div class="hyperparam">
+            <div class="hyperparam-name">var_smoothing</div>
+            <div class="hyperparam-control">Adds small value to variance to prevent division by zero</div>
+            <div class="hyperparam-importance">Stabilizes calculations when medical features have near-zero variance, common in binary diagnostic indicators</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">feature_priors</div>
+            <div class="hyperparam-control">Whether to learn feature priors or assume uniform distribution</div>
+            <div class="hyperparam-importance">Can incorporate medical domain knowledge about feature importance and prevalence</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decision Tree -->
+      <div class="model-card fade-in" data-model="decision tree">
+        <div class="model-header">
+          <div class="model-icon tree">DT</div>
+          <div>
+            <div class="model-title">Decision Tree</div>
+            <div class="model-type">Interpretable • Rule-based</div>
+          </div>
+        </div>
+        <div class="hyperparameters">
+          <div class="hyperparam">
+            <div class="hyperparam-name">max_depth</div>
+            <div class="hyperparam-control">Maximum depth of the tree structure</div>
+            <div class="hyperparam-importance">Limits model complexity and prevents overfitting, crucial for maintaining interpretability in clinical decision-making</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">min_samples_split</div>
+            <div class="hyperparam-control">Minimum samples required to split an internal node</div>
+            <div class="hyperparam-importance">Ensures statistically meaningful splits, important when working with limited patient cohorts</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">criterion</div>
+            <div class="hyperparam-control">Split quality measure: gini impurity or entropy</div>
+            <div class="hyperparam-importance">Determines how the algorithm chooses the best feature to split on at each decision point</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">max_features</div>
+            <div class="hyperparam-control">Number of features considered for each split</div>
+            <div class="hyperparam-importance">Controls model variance and can improve generalization across different patient populations. 'sqrt' often works well for medical classification</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">class_weight</div>
+            <div class="hyperparam-control">Weights for different classes to handle imbalanced data</div>
+            <div class="hyperparam-importance">Essential for rare disease detection where positive cases are much less frequent than negative cases</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Random Forest -->
+      <div class="model-card fade-in" data-model="random forest">
+        <div class="model-header">
+          <div class="model-icon forest">RF</div>
+          <div>
+            <div class="model-title">Random Forest</div>
+            <div class="model-type">Ensemble • Robust</div>
+          </div>
+        </div>
+        <div class="hyperparameters">
+          <div class="hyperparam">
+            <div class="hyperparam-name">n_estimators</div>
+            <div class="hyperparam-control">Number of decision trees in the forest</div>
+            <div class="hyperparam-importance">More trees improve stability and reduce variance, critical for robust medical predictions (typically 100-500 trees)</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">max_depth</div>
+            <div class="hyperparam-control">Maximum depth for each tree in the ensemble</div>
+            <div class="hyperparam-importance">Controls individual tree complexity, preventing overfitting while maintaining ensemble diversity</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">max_features</div>
+            <div class="hyperparam-control">Number of features randomly selected at each split</div>
+            <div class="hyperparam-importance">Increases tree diversity and reduces correlation between trees, improving generalization</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">bootstrap</div>
+            <div class="hyperparam-control">Whether to sample with replacement for each tree</div>
+            <div class="hyperparam-importance">Introduces diversity and robustness, essential for handling variability in patient data across different hospitals/populations</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">class_weight</div>
+            <div class="hyperparam-control">Weights for different classes ('balanced', 'balanced_subsample')</div>
+            <div class="hyperparam-importance">Critical for medical datasets with class imbalance, helps prevent bias toward majority class (healthy patients)</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">oob_score</div>
+            <div class="hyperparam-control">Whether to use out-of-bag samples for validation</div>
+            <div class="hyperparam-importance">Provides unbiased estimate of model performance without separate validation set, useful with limited medical data</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support Vector Machine -->
+      <div class="model-card fade-in" data-model="support vector machine svm">
+        <div class="model-header">
+          <div class="model-icon svm">SVM</div>
+          <div>
+            <div class="model-title">Support Vector Machine</div>
+            <div class="model-type">Kernel-based • Versatile</div>
+          </div>
+        </div>
+        <div class="hyperparameters">
+          <div class="hyperparam">
+            <div class="hyperparam-name">C</div>
+            <div class="hyperparam-control">Regularization parameter (controls margin vs. training error)</div>
+            <div class="hyperparam-importance">Higher C creates complex decision boundary (low bias, high variance). Lower C creates smoother boundary. Critical for noisy medical data</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">kernel</div>
+            <div class="hyperparam-control">Kernel function: linear, polynomial, RBF (Gaussian), sigmoid</div>
+            <div class="hyperparam-importance">Determines decision boundary shape. RBF good for non-linear medical patterns, linear for high-dimensional genomic data</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">gamma</div>
+            <div class="hyperparam-control">Kernel coefficient for RBF, polynomial, and sigmoid kernels</div>
+            <div class="hyperparam-importance">Controls influence of single training examples. High gamma = tight fit (overfitting risk), low gamma = smooth fit</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">degree</div>
+            <div class="hyperparam-control">Degree of polynomial kernel function</div>
+            <div class="hyperparam-importance">Higher degrees can capture complex feature interactions in medical data but increase computational cost and overfitting risk</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">class_weight</div>
+            <div class="hyperparam-control">Weights for different classes ('balanced' or custom weights)</div>
+            <div class="hyperparam-importance">Essential for imbalanced medical datasets. Helps SVM not bias toward majority class (healthy vs. diseased)</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">probability</div>
+            <div class="hyperparam-control">Whether to enable probability estimates</div>
+            <div class="hyperparam-importance">Important for medical applications where you need confidence scores, not just classifications (risk assessment)</div>
+          </div>
+          <div class="hyperparam">
+            <div class="hyperparam-name">tol</div>
+            <div class="hyperparam-control">Tolerance for stopping criterion</div>
+            <div class="hyperparam-importance">Affects convergence speed vs. precision trade-off, important for large medical datasets</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const modelsGrid = document.getElementById('modelsGrid');
+    
+    searchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const modelCards = modelsGrid.querySelectorAll('.model-card');
+      
+      modelCards.forEach(card => {
+        const modelName = card.getAttribute('data-model');
+        const cardText = card.textContent.toLowerCase();
+        
+        if (cardText.includes(searchTerm) || modelName.includes(searchTerm)) {
+          card.style.display = 'block';
+          card.classList.add('fade-in');
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+
+    // Add smooth scroll behavior
+    document.querySelectorAll('.hyperparam').forEach(param => {
+      param.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateX(5px) scale(1.02)';
+      });
+      
+      param.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateX(0) scale(1)';
+      });
+    });
+  </script>
+</body>
+</html>

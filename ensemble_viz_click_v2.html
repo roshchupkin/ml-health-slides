@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ensemble Methods — Interactive Visualization</title>
+<style>
+  :root{
+    --bg:#f8fafc; --fg:#0f172a; --muted:#64748b; --border:#e2e8f0;
+    --data:#dcfce7; --data-border:#22c55e;
+    --learner:#dbeafe; --learner-border:#3b82f6;
+    --meta:#fef3c7; --meta-border:#f59e0b;
+    --error:#fecaca; --error-border:#ef4444;
+    --agg:#f1f5f9; --agg-border:#64748b;
+    --hi:#1e293b;
+    --train:#dcfce7; --train-border:#22c55e;
+    --val:#dbeafe; --val-border:#3b82f6;
+    --test:#fef3c7; --test-border:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Ubuntu,sans-serif;line-height:1.6}
+  .wrap{max-width:1400px;margin:0 auto;padding:32px}
+  h1{margin:0 0 8px;font-size:clamp(32px,4vw,48px);font-weight:700;color:#1e293b}
+  .sub{color:var(--muted); margin:0 0 24px;font-size:18px;line-height:1.5}
+  
+  .intro-box{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:24px;border-radius:16px;border-left:6px solid #0284c7;margin-bottom:24px;}
+  .intro-box h3{margin:0 0 12px;color:#0c4a6e;font-size:20px;}
+  .intro-box p{color:#0c4a6e;margin:0;line-height:1.6;}
+  
+  .top-controls{display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:20px; color:var(--muted);padding:20px;background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+  .top-controls label{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .top-controls input[type="range"]{width:200px;height:6px;border-radius:3px;background:#e2e8f0;outline:none}
+  .top-controls input[type="range"]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;cursor:pointer}
+  .select, .btn{border:2px solid var(--border); background:#fff; color:var(--fg); padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer;font-size:14px;transition:all 0.2s}
+  .select:hover,.btn:hover{background:#f8fafc;border-color:#cbd5e1}
+  .btn{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .btn:hover{background:#2563eb;border-color:#2563eb}
+  
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px}
+  .tab{border:2px solid var(--border); background:#fff; padding:12px 20px; border-radius:12px; font-weight:600; cursor:pointer; color:var(--fg);transition:all 0.2s;font-size:14px}
+  .tab:hover{background:#f8fafc;border-color:#cbd5e1}
+  .tab.active{background:#1e293b; color:#fff; border-color:#1e293b;box-shadow:0 4px 8px rgba(30,41,59,0.3)}
+  
+  .layout{display:grid; grid-template-columns: 7fr 5fr; gap:24px; align-items:start}
+  .canvas{background:#fff; border:1px solid var(--border); border-radius:20px; padding:20px; position:relative; min-height:500px;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+  .panel{background:#fff; border:1px solid var(--border); border-radius:20px; padding:24px;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+  
+  .controls{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px}
+  button{border:2px solid var(--border); background:#fff; color:var(--fg); padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer;transition:all 0.2s;font-size:14px}
+  button:hover{background:#f8fafc;border-color:#cbd5e1}
+  
+  svg{width:100%; height:100%; display:block}
+  .node rect{rx:12; ry:12; stroke-width:2.5}
+  .node text{font-weight:700; font-size:14px; pointer-events:none}
+  .type-data rect{fill:var(--data); stroke:var(--data-border)}
+  .type-learner rect{fill:var(--learner); stroke:var(--learner-border)}
+  .type-meta rect{fill:var(--meta); stroke:var(--meta-border)}
+  .type-error rect{fill:var(--error); stroke:var(--error-border)}
+  .type-agg rect{fill:var(--agg); stroke:var(--agg-border)}
+  .type-train rect{fill:var(--train); stroke:var(--train-border)}
+  .type-val rect{fill:var(--val); stroke:var(--val-border)}
+  .type-test rect{fill:var(--test); stroke:var(--test-border)}
+  
+  .arrow{stroke:#64748b; stroke-width:3; fill:none; marker-end:url(#arrowHead)}
+  .dim{opacity:.3}
+  .highlight rect{stroke:var(--hi) !important; stroke-width:4}
+  .highlight .arrow{stroke:var(--hi) !important; stroke-width:4}
+  
+  .legend{display:flex; gap:16px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:15px; margin-top:20px;padding:16px;background:#f8fafc;border-radius:12px}
+  .dot{width:16px; height:16px; border-radius:6px; display:inline-block; margin-right:8px; border:2px solid var(--border)}
+  .d-data{background:var(--data)}
+  .d-learner{background:var(--learner)}
+  .d-meta{background:var(--meta)}
+  .d-error{background:var(--error)}
+  .d-agg{background:var(--agg)}
+  .d-train{background:var(--train)}
+  .d-val{background:var(--val)}
+  .d-test{background:var(--test)}
+  
+  .caption{font-size:16px; color:var(--muted); line-height:1.6; background:#f8fafc; border:2px solid var(--border); border-radius:16px; padding:20px;margin-bottom:20px}
+  .title{font-weight:800; margin-bottom:8px; color:#1e293b;font-size:18px}
+  
+  .step-explanation{background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:16px;border-radius:12px;border-left:4px solid #22c55e;margin-top:12px;font-size:14px;color:#166534;line-height:1.5}
+  .step-explanation h4{margin:0 0 8px;font-size:15px;font-weight:700}
+  .step-explanation ul{margin:8px 0;padding-left:20px}
+  .step-explanation li{margin-bottom:4px}
+  
+  .concept-box{background:linear-gradient(135deg,#fef3c7,#fde68a);padding:12px;border-radius:8px;border-left:3px solid #f59e0b;margin:8px 0;font-size:13px;color:#92400e}
+  .concept-box strong{font-weight:700}
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; background:#1e293b; color:#fff; padding:4px 10px; border-radius:20px;font-weight:600}
+  .method{margin-top:20px; font-size:15px; color:var(--muted)}
+  .method h3{margin:12px 0 8px; font-size:18px; color:#1e293b;font-weight:700}
+  .method ul{margin:8px 0 0 20px;line-height:1.6}
+  .method li{margin-bottom:6px}
+  
+  .data-split-info{background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:16px;border-radius:12px;border-left:4px solid #22c55e;margin-top:16px}
+  .data-split-info h4{margin:0 0 8px;color:#166534;font-size:16px;font-weight:700}
+  .data-split-info p{margin:0;color:#166534;font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Ensemble Methods — Interactive Visualization</h1>
+    <p class="sub">Click <span class="kbd">Next</span> to walk through each method. Understand how different ensemble techniques handle training, validation, and test data splits.</p>
+
+    <div class="intro-box">
+      <h3>🎯 What are Ensemble Methods?</h3>
+      <p><strong>Think of ensemble methods like asking multiple experts for their opinion instead of just one.</strong> Instead of relying on a single machine learning model, we combine predictions from several models to get better, more reliable results. It's like having a team of doctors diagnose a patient - each might see something different, but together they're more accurate.</p>
+      
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:16px;">
+        <div style="background:rgba(255,255,255,0.7);padding:12px;border-radius:8px;">
+          <strong>🤔 Why use ensembles?</strong>
+          <ul style="margin:8px 0;padding-left:20px;font-size:14px;">
+            <li>More accurate predictions</li>
+            <li>More stable results</li>
+            <li>Better handling of uncertainty</li>
+            <li>Reduces overfitting risk</li>
+          </ul>
+        </div>
+        <div style="background:rgba(255,255,255,0.7);padding:12px;border-radius:8px;">
+          <strong>🎯 Key concepts:</strong>
+          <ul style="margin:8px 0;padding-left:20px;font-size:14px;">
+            <li><strong>Base models:</strong> Individual learning algorithms</li>
+            <li><strong>Combination:</strong> How we merge their predictions</li>
+            <li><strong>Diversity:</strong> Models should be different from each other</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-controls">
+      <label>Dataset size N:
+        <input id="nRange" type="range" min="200" max="20000" step="100" value="5000">
+        <b><span id="nVal">5000</span></b>
+      </label>
+      <label>Stacking folds K:
+        <select id="kStack" class="select">
+          <option>3</option><option selected>5</option><option>10</option>
+        </select>
+      </label>
+      <label>Blending holdout:
+        <input id="holdRange" type="range" min="10" max="40" step="5" value="20">
+        <b><span id="holdVal">20%</span></b>
+      </label>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#fef7ed,#fed7aa);padding:16px;border-radius:12px;border-left:4px solid #ea580c;margin-bottom:20px;">
+      <h4 style="margin:0 0 8px;color:#9a3412;font-size:16px;font-weight:700;">🎓 How to Use This Visualization</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;color:#9a3412;font-size:14px;">
+        <div>
+          <strong>1. Choose a Method:</strong> Click on different tabs to explore each ensemble technique
+        </div>
+        <div>
+          <strong>2. Step Through:</strong> Use "Next" button to see each step in detail
+        </div>
+        <div>
+          <strong>3. Adjust Parameters:</strong> Change dataset size and other settings to see how numbers update
+        </div>
+        <div>
+          <strong>4. Read Explanations:</strong> Each step has beginner-friendly explanations below
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-method="bagging">🌳 Bagging</button>
+      <button class="tab" data-method="boosting">🚀 Boosting</button>
+      <button class="tab" data-method="stacking">🏗️ Stacking</button>
+      <button class="tab" data-method="voting">🗳️ Voting</button>
+      <button class="tab" data-method="blending">🥤 Blending</button>
+    </div>
+
+    <div class="layout">
+      <div class="canvas">
+        <svg viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="arrowHead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"></polygon>
+            </marker>
+          </defs>
+
+          <!-- Bagging scene -->
+          <g id="scene-bagging" data-steps="4">
+            <g class="node type-data" id="bag-data" transform="translate(40,60)">
+              <rect width="220" height="70"></rect>
+              <text x="110" y="27" text-anchor="middle">Dataset</text>
+              <text id="bag-n" x="110" y="50" text-anchor="middle" font-size="12" fill="#166534">N=?</text>
+            </g>
+            <!-- bootstrap samples -->
+            <g class="node type-data" id="bag-s1" transform="translate(40,170)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Sample 1</text>
+            </g>
+            <g class="node type-data" id="bag-s2" transform="translate(190,170)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Sample 2</text>
+            </g>
+            <g class="node type-data" id="bag-s3" transform="translate(340,170)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Sample 3</text>
+            </g>
+            <g class="node type-data" id="bag-s4" transform="translate(490,170)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Sample 4</text>
+            </g>
+            <!-- learners -->
+            <g class="node type-learner" id="bag-l1" transform="translate(40,260)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Tree 1</text>
+            </g>
+            <g class="node type-learner" id="bag-l2" transform="translate(190,260)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Tree 2</text>
+            </g>
+            <g class="node type-learner" id="bag-l3" transform="translate(340,260)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Tree 3</text>
+            </g>
+            <g class="node type-learner" id="bag-l4" transform="translate(490,260)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Tree 4</text>
+            </g>
+            <!-- aggregation -->
+            <g class="node type-agg" id="bag-agg" transform="translate(700,260)">
+              <rect width="170" height="80"></rect>
+              <text x="85" y="35" text-anchor="middle">Average / Vote</text>
+              <text x="85" y="55" text-anchor="middle" font-size="12" fill="#374151">Random Forest</text>
+            </g>
+            <!-- arrows -->
+            <path class="arrow" id="bag-a1" d="M150,130 C140,150 110,160 110,170"></path>
+            <path class="arrow" id="bag-a2" d="M150,130 C160,150 260,160 260,170"></path>
+            <path class="arrow" id="bag-a3" d="M150,130 C170,150 410,160 410,170"></path>
+            <path class="arrow" id="bag-a4" d="M150,130 C180,150 560,160 560,170"></path>
+
+            <path class="arrow" id="bag-b1" d="M110,220 L110,260"></path>
+            <path class="arrow" id="bag-b2" d="M260,220 L260,260"></path>
+            <path class="arrow" id="bag-b3" d="M410,220 L410,260"></path>
+            <path class="arrow" id="bag-b4" d="M560,220 L560,260"></path>
+
+            <path class="arrow" id="bag-c1" d="M180,285 C300,285 600,285 700,300"></path>
+            <path class="arrow" id="bag-c2" d="M330,285 C450,285 600,295 700,300"></path>
+            <path class="arrow" id="bag-c3" d="M480,285 C550,285 600,305 700,300"></path>
+            <path class="arrow" id="bag-c4" d="M630,285 C650,285 680,300 700,300"></path>
+          </g>
+
+          <!-- Boosting scene -->
+          <g id="scene-boosting" data-steps="6" style="display:none">
+            <g class="node type-data" id="boo-data" transform="translate(40,60)">
+              <rect width="240" height="70"></rect>
+              <text x="120" y="27" text-anchor="middle">Dataset + Weights</text>
+              <text id="boo-n" x="120" y="50" text-anchor="middle" font-size="12" fill="#1f2937">N=?</text>
+            </g>
+            <g class="node type-learner" id="boo-l1" transform="translate(320,60)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Weak L1</text>
+            </g>
+            <g class="node type-error" id="boo-e1" transform="translate(500,55)">
+              <rect width="130" height="60"></rect>
+              <text x="65" y="35" text-anchor="middle">Errors↑</text>
+            </g>
+            <g class="node type-learner" id="boo-l2" transform="translate(320,160)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Weak L2</text>
+            </g>
+            <g class="node type-error" id="boo-e2" transform="translate(500,155)">
+              <rect width="130" height="60"></rect>
+              <text x="65" y="35" text-anchor="middle">Errors↓</text>
+            </g>
+            <g class="node type-learner" id="boo-l3" transform="translate(320,260)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Weak L3</text>
+            </g>
+            <g class="node type-agg" id="boo-agg" transform="translate(700,160)">
+              <rect width="180" height="80"></rect>
+              <text x="90" y="35" text-anchor="middle">Weighted Sum</text>
+              <text x="90" y="55" text-anchor="middle" font-size="12" fill="#1f2937">AdaBoost / GBM / XGBoost</text>
+            </g>
+            <!-- arrows -->
+            <path class="arrow" id="boo-a1" d="M280,95 L320,95"></path>
+            <path class="arrow" id="boo-a2" d="M460,95 L500,95"></path>
+            <path class="arrow" id="boo-a3" d="M640,120 C660,140 670,160 700,180"></path>
+
+            <path class="arrow" id="boo-b1" d="M280,195 L320,195"></path>
+            <path class="arrow" id="boo-b2" d="M460,195 L500,195"></path>
+            <path class="arrow" id="boo-b3" d="M640,195 C660,195 670,195 700,195"></path>
+
+            <path class="arrow" id="boo-c1" d="M280,295 L320,295"></path>
+            <path class="arrow" id="boo-c2" d="M460,215 C500,250 600,250 700,220"></path>
+          </g>
+
+          <!-- Stacking scene -->
+          <g id="scene-stacking" data-steps="5" style="display:none">
+            <g class="node type-data" id="sta-data" transform="translate(40,60)">
+              <rect width="220" height="70"></rect>
+              <text x="110" y="27" text-anchor="middle">Dataset</text>
+              <text id="sta-n" x="110" y="50" text-anchor="middle" font-size="12" fill="#1f2937">N=?</text>
+            </g>
+            <g class="node type-learner" id="sta-svm" transform="translate(300,40)">
+              <rect width="160" height="50"></rect>
+              <text x="80" y="28" text-anchor="middle">Model A (SVM)</text>
+            </g>
+            <g class="node type-learner" id="sta-tree" transform="translate(300,120)">
+              <rect width="160" height="50"></rect>
+              <text x="80" y="28" text-anchor="middle">Model B (Tree)</text>
+            </g>
+            <g class="node type-learner" id="sta-nn" transform="translate(300,200)">
+              <rect width="160" height="50"></rect>
+              <text x="80" y="28" text-anchor="middle">Model C (NN)</text>
+            </g>
+            <g class="node type-meta" id="sta-meta" transform="translate(700,120)">
+              <rect width="190" height="70"></rect>
+              <text x="95" y="27" text-anchor="middle">Meta-learner</text>
+              <text x="95" y="50" text-anchor="middle" font-size="12" fill="#1f2937">Logistic / Ridge / GBM</text>
+            </g>
+            <path class="arrow" id="sta-a1" d="M260,95 C280,95 280,65 300,65"></path>
+            <path class="arrow" id="sta-a2" d="M260,95 C280,95 280,145 300,145"></path>
+            <path class="arrow" id="sta-a3" d="M260,95 C280,95 280,225 300,225"></path>
+            <path class="arrow" id="sta-b1" d="M460,65 C560,65 660,120 700,155"></path>
+            <path class="arrow" id="sta-b2" d="M460,145 C560,145 660,155 700,155"></path>
+            <path class="arrow" id="sta-b3" d="M460,225 C560,225 660,190 700,155"></path>
+          </g>
+
+          <!-- Voting scene -->
+          <g id="scene-voting" data-steps="4" style="display:none">
+            <g class="node type-learner" id="vot-l1" transform="translate(140,60)">
+              <rect width="160" height="50"></rect>
+              <text x="80" y="28" text-anchor="middle">Model A</text>
+            </g>
+            <g class="node type-learner" id="vot-l2" transform="translate(140,140)">
+              <rect width="160" height="50"></rect>
+              <text x="80" y="28" text-anchor="middle">Model B</text>
+            </g>
+            <g class="node type-learner" id="vot-l3" transform="translate(140,220)">
+              <rect width="160" height="50"></rect>
+              <text x="80" y="28" text-anchor="middle">Model C</text>
+            </g>
+            <g class="node type-agg" id="vot-agg" transform="translate(520,140)">
+              <rect width="220" height="90"></rect>
+              <text x="110" y="35" text-anchor="middle">Majority / Weighted Vote</text>
+              <text x="110" y="60" text-anchor="middle" font-size="12" fill="#1f2937">Simple ensemble</text>
+            </g>
+            <path class="arrow" id="vot-a1" d="M300,85 C360,110 440,130 520,165"></path>
+            <path class="arrow" id="vot-a2" d="M300,165 C360,165 440,165 520,165"></path>
+            <path class="arrow" id="vot-a3" d="M300,245 C360,220 440,200 520,165"></path>
+          </g>
+
+          <!-- Blending scene -->
+          <g id="scene-blending" data-steps="5" style="display:none">
+            <g class="node type-data" id="ble-all" transform="translate(40,60)">
+              <rect width="220" height="70"></rect>
+              <text x="110" y="27" text-anchor="middle">All Data</text>
+              <text id="ble-n" x="110" y="50" text-anchor="middle" font-size="12" fill="#1f2937">N=?</text>
+            </g>
+            <g class="node type-data" id="ble-train" transform="translate(40,160)">
+              <rect width="180" height="50"></rect>
+              <text x="90" y="28" text-anchor="middle">Train (1−h)</text>
+            </g>
+            <g class="node type-data" id="ble-hold" transform="translate(240,160)">
+              <rect width="180" height="50"></rect>
+              <text x="90" y="28" text-anchor="middle">Holdout (h)</text>
+            </g>
+            <g class="node type-learner" id="ble-m1" transform="translate(40,240)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Model A</text>
+            </g>
+            <g class="node type-learner" id="ble-m2" transform="translate(190,240)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Model B</text>
+            </g>
+            <g class="node type-learner" id="ble-m3" transform="translate(340,240)">
+              <rect width="140" height="50"></rect>
+              <text x="70" y="28" text-anchor="middle">Model C</text>
+            </g>
+            <g class="node type-meta" id="ble-meta" transform="translate(700,220)">
+              <rect width="190" height="70"></rect>
+              <text x="95" y="27" text-anchor="middle">Meta on Holdout</text>
+              <text x="95" y="50" text-anchor="middle" font-size="12" fill="#1f2937">e.g., Logistic</text>
+            </g>
+            <path class="arrow" id="ble-a1" d="M150,130 C160,150 130,160 130,160"></path>
+            <path class="arrow" id="ble-a2" d="M150,130 C210,150 330,160 330,160"></path>
+            <path class="arrow" id="ble-b1" d="M130,210 L110,240"></path>
+            <path class="arrow" id="ble-b2" d="M130,210 L260,240"></path>
+            <path class="arrow" id="ble-b3" d="M330,210 L410,240"></path>
+            <path class="arrow" id="ble-c1" d="M110,290 C400,310 640,260 700,255"></path>
+            <path class="arrow" id="ble-c2" d="M260,290 C430,300 640,280 700,255"></path>
+            <path class="arrow" id="ble-c3" d="M410,290 C520,300 640,290 700,255"></path>
+          </g>
+        </svg>
+      </div>
+
+      <div class="panel">
+        <div class="controls">
+          <button id="prevBtn">◀ Prev</button>
+          <button id="nextBtn">Next ▶</button>
+          <button id="resetBtn">Reset</button>
+        </div>
+        <div class="caption">
+          <div class="title" id="capTitle">Bagging — Step 1/4</div>
+          <div id="capText">Start with the dataset. Bagging draws multiple bootstrap samples (with replacement) from the same dataset.</div>
+          
+          <div class="step-explanation" id="stepExplanation">
+            <h4>📚 Beginner's Guide to This Step</h4>
+            <div id="stepExplanationText">
+              <p><strong>What's happening:</strong> We're starting with our original dataset. Think of it like having a big collection of examples to learn from.</p>
+              
+              <div class="concept-box">
+                <strong>💡 Key Concept - Bootstrap Sampling:</strong> This is like randomly picking examples from our dataset, but we can pick the same example multiple times (with replacement). It's like drawing cards from a deck and putting them back before the next draw.
+              </div>
+              
+              <p><strong>Why this matters:</strong> By creating different random samples, each model will see slightly different data, making them more diverse and robust.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="method" id="methodDetails">
+          <h3>Method details</h3>
+          <ul id="methodBullets">
+            <li><b>What it’s good at:</b> Reducing variance; robust to noise.</li>
+            <li><b>Common algorithms:</b> Random Forest, Bagged Trees.</li>
+            <li><b>Notes:</b> Each bootstrap sample is size N; ~63.2% unique; OOB estimate available.</li>
+          </ul>
+        </div>
+
+        <div class="legend">
+          <span><span class="dot d-data"></span>Data / samples</span>
+          <span><span class="dot d-learner"></span>Base learner</span>
+          <span><span class="dot d-meta"></span>Meta / combiner</span>
+          <span><span class="dot d-error"></span>Errors / weights</span>
+          <span><span class="dot d-agg"></span>Aggregator</span>
+          <span><span class="dot d-train"></span>Training data</span>
+          <span><span class="dot d-val"></span>Validation data</span>
+          <span><span class="dot d-test"></span>Test data</span>
+        </div>
+        
+        <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:20px;border-radius:16px;border-left:6px solid #0284c7;margin-top:20px;">
+          <h4 style="margin:0 0 12px;color:#0c4a6e;font-size:16px;font-weight:700;">🔍 Method Comparison for Beginners</h4>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;font-size:13px;color:#0c4a6e;">
+            <div style="background:rgba(255,255,255,0.7);padding:12px;border-radius:8px;">
+              <strong>🌳 Bagging (Random Forest)</strong>
+              <ul style="margin:6px 0;padding-left:16px;">
+                <li>Parallel training</li>
+                <li>Reduces variance</li>
+                <li>Good for noisy data</li>
+                <li>Built-in validation</li>
+              </ul>
+            </div>
+            <div style="background:rgba(255,255,255,0.7);padding:12px;border-radius:8px;">
+              <strong>🚀 Boosting (XGBoost)</strong>
+              <ul style="margin:6px 0;padding-left:16px;">
+                <li>Sequential training</li>
+                <li>Reduces bias</li>
+                <li>Very accurate</li>
+                <li>Can overfit</li>
+              </ul>
+            </div>
+            <div style="background:rgba(255,255,255,0.7);padding:12px;border-radius:8px;">
+              <strong>🏗️ Stacking</strong>
+              <ul style="margin:6px 0;padding-left:16px;">
+                <li>Meta-learner</li>
+                <li>Most flexible</li>
+                <li>Complex setup</li>
+                <li>Best performance</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const tabs = document.querySelectorAll('.tab');
+  const scenes = {
+    bagging: document.getElementById('scene-bagging'),
+    boosting: document.getElementById('scene-boosting'),
+    stacking: document.getElementById('scene-stacking'),
+    voting: document.getElementById('scene-voting'),
+    blending: document.getElementById('scene-blending'),
+  };
+
+  const nRange = document.getElementById('nRange');
+  const nVal = document.getElementById('nVal');
+  const kStack = document.getElementById('kStack');
+  const holdRange = document.getElementById('holdRange');
+  const holdVal = document.getElementById('holdVal');
+
+  const capTitle = document.getElementById('capTitle');
+  const capText  = document.getElementById('capText');
+  const prevBtn  = document.getElementById('prevBtn');
+  const nextBtn  = document.getElementById('nextBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  const methodDetails = document.getElementById('methodDetails');
+  const methodBullets = document.getElementById('methodBullets');
+
+  function fmt(n){ return n.toLocaleString(); }
+  function percentage(p){ return (Math.round(p*10)/10)+'%'; }
+
+  // Update dataset labels
+  function updateNLabels(){
+    const N = parseInt(nRange.value,10);
+    nVal.textContent = fmt(N);
+    // Put N on boxes where shown
+    const bagN = document.getElementById('bag-n');
+    const booN = document.getElementById('boo-n');
+    const staN = document.getElementById('sta-n');
+    const bleN = document.getElementById('ble-n');
+    bagN.textContent = 'N='+fmt(N);
+    booN.textContent = 'N='+fmt(N);
+    staN.textContent = 'N='+fmt(N);
+    bleN.textContent = 'N='+fmt(N);
+    holdVal.textContent = holdRange.value + '%';
+    refreshCaption();
+  }
+
+  // Step definitions with functions to compute dynamic text
+  const steps = {
+    bagging: [
+      {ids:['bag-data'], text: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `Dataset with <b>N=${fmt(N)}</b> samples. <strong>Training Strategy:</strong> All data is used for training through bootstrap sampling. No separate validation set needed - out-of-bag samples provide internal validation.`;
+      },
+      explanation: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `
+          <p><strong>What's happening:</strong> We're starting with our original dataset of ${fmt(N)} examples. Think of it like having a big collection of data points to learn from.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Bootstrap Sampling:</strong> This is like randomly picking examples from our dataset, but we can pick the same example multiple times (with replacement). It's like drawing cards from a deck and putting them back before the next draw.
+          </div>
+          
+          <p><strong>Why this matters:</strong> By creating different random samples, each model will see slightly different data, making them more diverse and robust.</p>
+          
+          <p><strong>Training approach:</strong> We use ALL our data for training, but in a clever way - each model gets a different random sample, and some data points are left out for validation.</p>
+        `;
+      }},
+      {ids:['bag-s1','bag-s2','bag-s3','bag-s4','bag-a1','bag-a2','bag-a3','bag-a4'], text: ()=> {
+        const N = parseInt(nRange.value,10);
+        const unique = Math.round(N*0.632); const oob = N-unique;
+        return `Draw multiple <b>bootstrap samples</b> (size N, with replacement). Each has ≈ <b>${fmt(unique)}</b> unique points; ≈ <b>${fmt(oob)}</b> are out-of-bag.`;
+      },
+      explanation: ()=> {
+        const N = parseInt(nRange.value,10);
+        const unique = Math.round(N*0.632); const oob = N-unique;
+        return `
+          <p><strong>What's happening:</strong> We're creating multiple random samples from our original data. Each sample is the same size as our original dataset (${fmt(N)} examples), but with random selection.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Out-of-Bag (OOB) Samples:</strong> When we randomly sample with replacement, some data points get picked multiple times, while others might not get picked at all. The unpicked ones (about ${fmt(oob)} examples) are called "out-of-bag" and can be used for validation.
+          </div>
+          
+          <p><strong>Why this matters:</strong> Each sample is slightly different, so each model will learn from different data. This creates diversity in our ensemble.</p>
+          
+          <p><strong>Smart validation:</strong> We don't need a separate validation set because the out-of-bag samples serve as our validation data!</p>
+        `;
+      }},
+      {ids:['bag-l1','bag-l2','bag-l3','bag-l4','bag-b1','bag-b2','bag-b3','bag-b4'], text: ()=> {
+        return `Train one <b>tree</b> per sample in parallel. (Shown: 4 learners; Random Forests often use dozens or hundreds.)`;
+      },
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> We're training individual decision trees, one for each bootstrap sample. Each tree learns to make predictions based on its specific sample of data.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Decision Trees:</strong> Think of a decision tree like a flowchart that asks yes/no questions to make predictions. For example: "Is the temperature > 20°C?" → "Yes" → "Is it sunny?" → "Yes" → "Predict: Go outside"
+          </div>
+          
+          <p><strong>Why this matters:</strong> Each tree might make different decisions because they trained on different data samples. This diversity is what makes the ensemble powerful.</p>
+          
+          <p><strong>Parallel training:</strong> All trees can be trained at the same time since they use different data. This makes bagging very efficient!</p>
+          
+          <p><strong>Real-world usage:</strong> Random Forests typically use 100-500 trees, not just 4. More trees generally mean better performance.</p>
+        `;
+      }},
+      {ids:['bag-agg','bag-c1','bag-c2','bag-c3','bag-c4'], text: ()=> {
+        return `Aggregate predictions by <b>average</b> (regression) or <b>majority vote</b> (classification). Use out‑of‑bag samples for an internal validation estimate.`;
+      },
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> We're combining all the individual tree predictions into one final prediction. It's like taking a vote from all our "experts" (trees) and using their collective wisdom.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Aggregation:</strong> 
+            <ul>
+              <li><strong>For classification:</strong> Majority vote - if 3 out of 4 trees predict "spam", the final prediction is "spam"</li>
+              <li><strong>For regression:</strong> Average - if trees predict [10, 12, 11, 13], the final prediction is 11.5</li>
+            </ul>
+          </div>
+          
+          <p><strong>Why this matters:</strong> Combining multiple predictions reduces errors and makes the final result more reliable. It's like asking multiple doctors for a diagnosis instead of just one.</p>
+          
+          <p><strong>Built-in validation:</strong> We can use the out-of-bag samples to estimate how well our ensemble will perform on new data, without needing a separate validation set.</p>
+          
+          <p><strong>Final result:</strong> A Random Forest that's more accurate and stable than any single decision tree!</p>
+        `;
+      }},
+    ],
+    boosting: [
+      {ids:['boo-data'], text: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `Initialize weights <code>w=1/N</code> for <b>N=${fmt(N)}</b> samples. Boosting trains weak learners <b>sequentially</b>. <strong>Training Strategy:</strong> All data is used for training all models, but with different sample weights. Validation typically done through cross-validation or holdout set.`;
+      },
+      explanation: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `
+          <p><strong>What's happening:</strong> We're starting with our dataset of ${fmt(N)} examples, but this time we give each example an equal "importance" (weight). Think of it like giving everyone an equal vote at first.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Sequential Learning:</strong> Unlike bagging where all models train at the same time, boosting trains models one after another. Each new model tries to fix the mistakes of the previous ones.
+          </div>
+          
+          <p><strong>Why this matters:</strong> By training sequentially, each new model can focus on the examples that previous models found difficult. It's like having a tutor who focuses on your weak areas.</p>
+          
+          <p><strong>Training approach:</strong> We use ALL our data for training, but the importance of each example changes as we train more models. Examples that are hard to predict get more attention.</p>
+        `;
+      }},
+      {ids:['boo-l1','boo-a1'], text: ()=> `Fit <b>weak learner 1</b> (e.g., depth‑1 or depth‑3 tree).`,
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> We're training our first "weak" model. A weak learner is intentionally simple - it doesn't try to be perfect, just better than random guessing.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Weak Learners:</strong> These are simple models (like shallow decision trees) that are only slightly better than random guessing. Think of them as "students" who are still learning - not experts yet.
+          </div>
+          
+          <p><strong>Why this matters:</strong> Starting with weak learners allows us to build up complexity gradually. It's like learning to walk before running - we start simple and improve step by step.</p>
+          
+          <p><strong>Example:</strong> A weak tree might only ask one question like "Is the temperature > 20°C?" and make a prediction based on that single rule.</p>
+        `;
+      }},
+      {ids:['boo-e1','boo-a2'], text: ()=> `Increase weights on <b>misclassified</b> points so the next learner focuses on them (AdaBoost idea).`,
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> After the first model makes predictions, we identify which examples it got wrong. We then increase the "importance" of these difficult examples.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Adaptive Learning:</strong> This is like a teacher who notices which students are struggling and gives them extra attention. The next model will focus more on the examples that were hard to predict.
+          </div>
+          
+          <p><strong>Why this matters:</strong> By focusing on difficult examples, each new model can improve where the previous ones failed. This creates a sequence of models that get progressively better.</p>
+          
+          <p><strong>Example:</strong> If the first model struggled to predict "spam" emails, the next model will pay more attention to spam examples during training.</p>
+        `;
+      }},
+      {ids:['boo-l2','boo-b1'], text: ()=> `Fit <b>weak learner 2</b> using the updated weights.`,
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> We train a second weak model, but this time it pays more attention to the examples that the first model found difficult.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Weighted Training:</strong> The second model doesn't treat all examples equally. It focuses more on the "hard" examples, like a student who spends extra time on difficult topics.
+          </div>
+          
+          <p><strong>Why this matters:</strong> This second model will likely do better on the examples that the first model struggled with, improving the overall ensemble performance.</p>
+        `;
+      }},
+      {ids:['boo-e2','boo-b2'], text: ()=> `Reweight again; residual‑based updates in Gradient Boosting aim to reduce the current loss.`,
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> We repeat the process - identify what the second model got wrong and adjust the weights again for the next model.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Iterative Improvement:</strong> Each model in the sequence tries to fix the remaining errors. It's like having multiple tutors, each focusing on different weaknesses.
+          </div>
+          
+          <p><strong>Why this matters:</strong> This iterative process continues until we have a strong ensemble that can handle even the most difficult examples.</p>
+        `;
+      }},
+      {ids:['boo-l3','boo-agg','boo-a3','boo-b3','boo-c2'], text: ()=> `Combine learners with a <b>weighted sum</b>. Examples: <b>AdaBoost</b>, <b>Gradient Boosting</b>, <b>XGBoost</b>, <b>LightGBM</b>, <b>CatBoost</b>.`,
+      explanation: ()=> {
+        return `
+          <p><strong>What's happening:</strong> We combine all the weak models into one strong ensemble. Each model gets a "vote" based on how well it performed.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Weighted Combination:</strong> Unlike bagging where all models have equal votes, boosting gives more weight to models that performed better. It's like trusting the opinion of more experienced experts more.
+          </div>
+          
+          <p><strong>Why this matters:</strong> This weighted combination creates a very powerful model that can handle complex patterns and difficult examples.</p>
+          
+          <p><strong>Popular algorithms:</strong> AdaBoost, Gradient Boosting, XGBoost, LightGBM, and CatBoost are all boosting methods with slight variations.</p>
+        `;
+      }},
+    ],
+    stacking: [
+      {ids:['sta-data'], text: ()=> {
+        const N = parseInt(nRange.value,10); const K = parseInt(kStack.value,10);
+        const fold = Math.floor(N/K); const trainPart = Math.floor(N*(K-1)/K);
+        return `Use <b>K=${K}</b>-fold scheme to create out‑of‑fold (OOF) predictions. Each base model trains on ≈ <b>${fmt(trainPart)}</b> and validates on ≈ <b>${fmt(fold)}</b> per fold. <strong>Training Strategy:</strong> K-fold cross-validation generates OOF predictions for meta-learner training. Base models train on K-1 folds, predict on held-out fold. Final models retrain on full dataset.`;
+      },
+      explanation: ()=> {
+        const N = parseInt(nRange.value,10); const K = parseInt(kStack.value,10);
+        const fold = Math.floor(N/K); const trainPart = Math.floor(N*(K-1)/K);
+        return `
+          <p><strong>What's happening:</strong> We're setting up a sophisticated validation scheme using ${K}-fold cross-validation. This is like dividing our data into ${K} equal parts and using each part as a test set while training on the rest.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Out-of-Fold Predictions:</strong> Each model will train on ${fmt(trainPart)} examples and make predictions on ${fmt(fold)} examples that it never saw during training. This prevents data leakage and gives us reliable predictions.
+          </div>
+          
+          <p><strong>Why this matters:</strong> This approach ensures that our meta-learner (the model that combines predictions) trains on predictions that are truly "out-of-sample," making the ensemble more reliable.</p>
+          
+          <p><strong>Training approach:</strong> We use cross-validation to generate predictions for the meta-learner, then retrain all models on the full dataset for final use.</p>
+        `;
+      }},
+      {ids:['sta-svm','sta-a1'], text: ()=> `Train base model <b>A</b> (e.g., SVM/Logistic) with OOF generation.`},
+      {ids:['sta-tree','sta-a2'], text: ()=> `Train base model <b>B</b> (e.g., Decision Tree/Random Forest).`},
+      {ids:['sta-nn','sta-a3'], text: ()=> `Train base model <b>C</b> (e.g., Neural Net/KNN).`},
+      {ids:['sta-meta','sta-b1','sta-b2','sta-b3'], text: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `Stack OOF predictions into an <b>N=${fmt(N)}</b> row matrix and fit a <b>meta‑learner</b> (often Logistic/Ridge/GBM). Retrain base models on full data for final inference.`;
+      }},
+    ],
+    voting: [
+      {ids:['vot-l1','vot-l2','vot-l3'], text: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `Train several independent models on the same training set (≈ <b>N=${fmt(N)}</b>). <strong>Training Strategy:</strong> All models train on the same training data. Typically uses a separate validation set to determine voting weights or select the best combination strategy.`;
+      },
+      explanation: ()=> {
+        const N = parseInt(nRange.value,10);
+        return `
+          <p><strong>What's happening:</strong> We're training multiple different models (like SVM, Decision Tree, Neural Network) all on the same training data of ${fmt(N)} examples. Each model learns the same task but in its own way.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Model Diversity:</strong> We choose different types of models because they have different strengths. It's like having a team with different specialists - a doctor, an engineer, and a teacher - each bringing unique expertise.
+          </div>
+          
+          <p><strong>Why this matters:</strong> Different models might be good at different aspects of the problem. By combining them, we get the best of all worlds.</p>
+          
+          <p><strong>Training approach:</strong> All models see the same training data, but we typically use a separate validation set to determine how much weight to give each model's vote.</p>
+        `;
+      }},
+      {ids:['vot-a1'], text: ()=> `Each model predicts. Send predictions to the combiner.`},
+      {ids:['vot-a2'], text: ()=> `Collect predictions from all models.`},
+      {ids:['vot-agg','vot-a3'], text: ()=> `Final decision by <b>majority</b> or <b>weighted</b> vote (weights can come from validation accuracy).`},
+    ],
+    blending: [
+      {ids:['ble-all'], text: ()=> {
+        const N = parseInt(nRange.value,10); const h = parseInt(holdRange.value,10)/100;
+        const tr = Math.round(N*(1-h)); const ho = N-tr;
+        return `Split all data: <b>train=${fmt(tr)}</b>, <b>holdout=${fmt(ho)}</b> (h=${percentage(100*h/100)}). <strong>Training Strategy:</strong> Data split into train/holdout sets. Base models train only on training data. Meta-learner trains on base model predictions from holdout set. Simpler than stacking but uses less data for meta-training.`;
+      },
+      explanation: ()=> {
+        const N = parseInt(nRange.value,10); const h = parseInt(holdRange.value,10)/100;
+        const tr = Math.round(N*(1-h)); const ho = N-tr;
+        return `
+          <p><strong>What's happening:</strong> We're splitting our ${fmt(N)} examples into two parts: ${fmt(tr)} for training and ${fmt(ho)} for holdout. This is like setting aside some data for a final test.</p>
+          
+          <div class="concept-box">
+            <strong>💡 Key Concept - Holdout Set:</strong> The holdout set is completely separate from training data. It's like having a secret test that none of the models have seen before, ensuring fair evaluation.
+          </div>
+          
+          <p><strong>Why this matters:</strong> This approach is simpler than stacking but still effective. It's like having a simplified version of the stacking method that's easier to implement.</p>
+          
+          <p><strong>Training approach:</strong> Base models train on the training data, then make predictions on the holdout data. These predictions become features for training the meta-learner.</p>
+        `;
+      }},
+      {ids:['ble-train','ble-hold','ble-a1','ble-a2'], text: ()=> `Base models train only on the <b>train</b> split; holdout stays untouched for meta training.`},
+      {ids:['ble-m1','ble-m2','ble-m3','ble-b1','ble-b2','ble-b3'], text: ()=> `Fit several diverse base models (trees, linear, NN, etc.).`},
+      {ids:['ble-c1','ble-c2','ble-c3'], text: ()=> `Get base predictions on the <b>holdout</b>; these become features for the meta model.`},
+      {ids:['ble-meta'], text: ()=> `Train a <b>meta‑model</b> on holdout predictions (e.g., Logistic/Ridge). Faster than stacking but uses less data for meta training.`},
+    ]
+  };
+
+  const methodInfo = {
+    bagging: [
+      '<b>What it’s good at:</b> Variance reduction, stability on noisy data.',
+      '<b>Common algorithms:</b> Random Forest, Bagged Trees.',
+      '<b>Notes:</b> Bootstrap sample size N; ≈63.2% unique; ≈36.8% out‑of‑bag (OOB).'
+    ],
+    boosting: [
+      '<b>What it’s good at:</b> Bias reduction; strong accuracy with careful tuning.',
+      '<b>Common algorithms:</b> AdaBoost, Gradient Boosting, XGBoost, LightGBM, CatBoost.',
+      '<b>Notes:</b> Sequential learners with weights/residuals; watch for overfitting and learning‑rate/trees depth.'
+    ],
+    stacking: [
+      '<b>What it’s good at:</b> Combining complementary models via a trainable combiner.',
+      '<b>Common meta‑learners:</b> Logistic Regression, Ridge/Lasso, GBM.',
+      '<b>Notes:</b> Use OOF predictions to avoid leakage; often retrain base models on all data before inference.'
+    ],
+    voting: [
+      '<b>What it’s good at:</b> Simple, interpretable ensembles.',
+      '<b>Common variants:</b> Majority vote, Weighted vote (weights from validation).',
+      '<b>Notes:</b> Works best when base models are diverse and uncorrelated.'
+    ],
+    blending: [
+      '<b>What it’s good at:</b> Quick stacking‑like gains with a holdout set.',
+      '<b>Common meta‑learners:</b> Logistic, Ridge.',
+      '<b>Notes:</b> Uses less data for meta training than stacking; choose holdout size carefully.'
+    ]
+  };
+
+  let method = 'bagging';
+  let idx = 0;
+
+  function setMethod(m){
+    document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.method===m));
+    Object.entries(scenes).forEach(([k,el])=> el.style.display = (k===m?'block':'none'));
+    method = m; idx = 0;
+    // update method details
+    methodBullets.innerHTML = methodInfo[m].map(s=> `<li>${s}</li>`).join('');
+    refreshCaption();
+  }
+
+  function refreshCaption(){
+    // dim everything
+    const scene = scenes[method];
+    scene.querySelectorAll('.node, .arrow').forEach(el=> el.classList.add('dim'));
+    scene.querySelectorAll('.highlight').forEach(el=> el.classList.remove('highlight'));
+    // highlight current step
+    const s = steps[method][idx];
+    s.ids.forEach(id=> {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.remove('dim');
+      el.classList.add('highlight');
+    });
+    const total = steps[method].length;
+    const title = method.charAt(0).toUpperCase()+method.slice(1);
+    capTitle.textContent = `${title} — Step ${idx+1}/${total}`;
+    capText.innerHTML = typeof s.text==='function' ? s.text() : s.text;
+    
+    // Update explanation if available
+    const explanationDiv = document.getElementById('stepExplanationText');
+    if (explanationDiv && s.explanation) {
+      explanationDiv.innerHTML = typeof s.explanation==='function' ? s.explanation() : s.explanation;
+    }
+  }
+
+  function next(){ idx = Math.min(idx+1, steps[method].length-1); refreshCaption(); }
+  function prev(){ idx = Math.max(idx-1, 0); refreshCaption(); }
+  function reset(){ idx = 0; refreshCaption(); }
+
+  // events
+  document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=> setMethod(t.dataset.method)));
+  document.getElementById('nextBtn').addEventListener('click', next);
+  document.getElementById('prevBtn').addEventListener('click', prev);
+  document.getElementById('resetBtn').addEventListener('click', reset);
+  nRange.addEventListener('input', updateNLabels);
+  kStack.addEventListener('change', refreshCaption);
+  holdRange.addEventListener('input', updateNLabels);
+
+  // init
+  updateNLabels();
+  setMethod('bagging');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practical Neural Network Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #a0aec0;
+            font-weight: 300;
+        }
+
+        .training-dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .main-visualization {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .loss-curves {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .loss-canvas {
+            width: 100%;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .training-controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #a0aec0;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #4a5568;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #4a5568;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .control-group select option {
+            background: #2d3748;
+            color: #ffffff;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #a0aec0;
+            margin-top: 5px;
+        }
+
+        .overfitting-viz {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .overfitting-canvas {
+            width: 100%;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .info-box h3 {
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .info-box p {
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .hyperparameter-tuning {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .tuning-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .epoch-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .epoch-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4a5568;
+            transition: all 0.3s ease;
+        }
+
+        .epoch-dot.active {
+            background: #667eea;
+            transform: scale(1.2);
+        }
+
+        .epoch-dot.completed {
+            background: #48bb78;
+        }
+
+        .training-status {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .status-text {
+            font-size: 1.1em;
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #4a5568;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .regularization-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .regularization-title {
+            color: #fbbf24;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Practical Neural Network Training</h1>
+            <p>Interactive training dashboard with real-time monitoring and hyperparameter tuning</p>
+        </div>
+
+        <div class="training-dashboard">
+            <div class="main-visualization">
+                <div class="section-title">Training Progress & Loss Curves</div>
+                
+                <div class="loss-curves">
+                    <canvas class="loss-canvas" id="lossCanvas"></canvas>
+                    <p style="text-align: center; color: #a0aec0; font-size: 0.9rem;">
+                        Training Loss (Blue) vs Validation Loss (Red) - Watch for overfitting!
+                    </p>
+                </div>
+
+                <div class="training-controls">
+                    <button class="btn btn-primary" onclick="startTraining()">Start Training</button>
+                    <button class="btn btn-secondary" onclick="pauseTraining()">Pause</button>
+                    <button class="btn btn-danger" onclick="stopTraining()">Stop</button>
+                    <button class="btn btn-secondary" onclick="resetTraining()">Reset</button>
+                </div>
+
+                <div class="epoch-indicator">
+                    <div class="epoch-dot" id="epoch1"></div>
+                    <div class="epoch-dot" id="epoch2"></div>
+                    <div class="epoch-dot" id="epoch3"></div>
+                    <div class="epoch-dot" id="epoch4"></div>
+                    <div class="epoch-dot" id="epoch5"></div>
+                    <div class="epoch-dot" id="epoch6"></div>
+                    <div class="epoch-dot" id="epoch7"></div>
+                    <div class="epoch-dot" id="epoch8"></div>
+                    <div class="epoch-dot" id="epoch9"></div>
+                    <div class="epoch-dot" id="epoch10"></div>
+                </div>
+
+                <div class="training-status">
+                    <div class="status-text" id="statusText">Ready to train</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="trainingProgress"></div>
+                    </div>
+                    <div style="color: #a0aec0; font-size: 0.9em;">Epoch: <span id="currentEpoch">0</span> / 10</div>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="section-title">Hyperparameters</div>
+                
+                <div class="control-group">
+                    <label for="learningRate">Learning Rate: <span id="lrValue">0.01</span></label>
+                    <input type="range" id="learningRate" min="0.001" max="0.1" step="0.001" value="0.01">
+                </div>
+
+                <div class="control-group">
+                    <label for="batchSize">Batch Size: <span id="batchValue">32</span></label>
+                    <input type="range" id="batchSize" min="8" max="128" step="8" value="32">
+                </div>
+
+                <div class="control-group">
+                    <label for="epochs">Epochs: <span id="epochsValue">10</span></label>
+                    <input type="range" id="epochs" min="5" max="50" value="10">
+                </div>
+
+                <div class="control-group">
+                    <label for="optimizer">Optimizer</label>
+                    <select id="optimizer">
+                        <option value="sgd">SGD</option>
+                        <option value="adam">Adam</option>
+                        <option value="rmsprop">RMSprop</option>
+                    </select>
+                </div>
+
+                <div class="regularization-controls">
+                    <div class="regularization-title">Regularization</div>
+                    
+                    <div class="control-group">
+                        <label for="dropout">Dropout Rate: <span id="dropoutValue">0.2</span></label>
+                        <input type="range" id="dropout" min="0" max="0.5" step="0.1" value="0.2">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="l2Reg">L2 Regularization: <span id="l2Value">0.001</span></label>
+                        <input type="range" id="l2Reg" min="0" max="0.01" step="0.001" value="0.001">
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="trainLoss">0.00</div>
+                        <div class="stat-label">Training Loss</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="valLoss">0.00</div>
+                        <div class="stat-label">Validation Loss</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="trainAcc">0.00%</div>
+                        <div class="stat-label">Training Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="valAcc">0.00%</div>
+                        <div class="stat-label">Validation Accuracy</div>
+                    </div>
+                </div>
+
+                <div class="overfitting-viz">
+                    <div class="regularization-title">Overfitting Detection</div>
+                    <canvas class="overfitting-canvas" id="overfittingCanvas"></canvas>
+                    <p style="text-align: center; color: #a0aec0; font-size: 0.9rem; margin-top: 10px;">
+                        Gap between training and validation indicates overfitting
+                    </p>
+                </div>
+
+                <div class="info-box">
+                    <h3>Training Tips</h3>
+                    <p><strong>Overfitting:</strong> If validation loss increases while training loss decreases, you're overfitting. Try reducing model complexity or increasing regularization.</p>
+                    <p><strong>Underfitting:</strong> If both losses are high, the model is underfitting. Try increasing model capacity or training longer.</p>
+                    <p><strong>Learning Rate:</strong> Start with a moderate learning rate and adjust based on training stability.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="hyperparameter-tuning">
+            <div class="section-title">Hyperparameter Tuning Guide</div>
+            <div class="tuning-grid">
+                <div class="info-box">
+                    <h3>Learning Rate</h3>
+                    <p><strong>Too High:</strong> Training becomes unstable, loss oscillates</p>
+                    <p><strong>Too Low:</strong> Training is very slow, may get stuck in local minima</p>
+                    <p><strong>Optimal:</strong> Loss decreases steadily without oscillation</p>
+                </div>
+                <div class="info-box">
+                    <h3>Batch Size</h3>
+                    <p><strong>Small:</strong> More noisy gradients, better generalization</p>
+                    <p><strong>Large:</strong> Stable gradients, faster training</p>
+                    <p><strong>Optimal:</strong> Balance between stability and generalization</p>
+                </div>
+                <div class="info-box">
+                    <h3>Regularization</h3>
+                    <p><strong>Dropout:</strong> Randomly deactivates neurons during training</p>
+                    <p><strong>L2:</strong> Penalizes large weights, encourages smaller weights</p>
+                    <p><strong>Early Stopping:</strong> Stop training when validation loss stops improving</p>
+                </div>
+                <div class="info-box">
+                    <h3>Architecture</h3>
+                    <p><strong>Too Small:</strong> Underfitting, high bias</p>
+                    <p><strong>Too Large:</strong> Overfitting, high variance</p>
+                    <p><strong>Optimal:</strong> Just enough capacity for the task</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TrainingVisualizer {
+            constructor() {
+                this.isTraining = false;
+                this.currentEpoch = 0;
+                this.maxEpochs = 10;
+                this.trainingLoss = [];
+                this.validationLoss = [];
+                this.trainingAcc = [];
+                this.validationAcc = [];
+                this.animationId = null;
+                
+                this.initializeVisualizations();
+                this.setupEventListeners();
+            }
+
+            initializeVisualizations() {
+                this.drawLossCurves();
+                this.drawOverfittingViz();
+                this.updateStats();
+            }
+
+            setupEventListeners() {
+                // Update control values
+                document.getElementById('learningRate').addEventListener('input', function() {
+                    document.getElementById('lrValue').textContent = parseFloat(this.value).toFixed(3);
+                });
+
+                document.getElementById('batchSize').addEventListener('input', function() {
+                    document.getElementById('batchValue').textContent = this.value;
+                });
+
+                document.getElementById('epochs').addEventListener('input', function() {
+                    document.getElementById('epochsValue').textContent = this.value;
+                });
+
+                document.getElementById('dropout').addEventListener('input', function() {
+                    document.getElementById('dropoutValue').textContent = parseFloat(this.value).toFixed(1);
+                });
+
+                document.getElementById('l2Reg').addEventListener('input', function() {
+                    document.getElementById('l2Value').textContent = parseFloat(this.value).toFixed(3);
+                });
+            }
+
+            drawLossCurves() {
+                const canvas = document.getElementById('lossCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const margin = 40;
+                const plotWidth = canvas.width - 2 * margin;
+                const plotHeight = canvas.height - 2 * margin;
+                
+                // Draw axes
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(margin, canvas.height - margin);
+                ctx.lineTo(canvas.width - margin, canvas.height - margin);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, canvas.height - margin);
+                ctx.stroke();
+                
+                // Draw grid lines
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                for (let i = 1; i < 5; i++) {
+                    const y = margin + (i * plotHeight / 5);
+                    ctx.beginPath();
+                    ctx.moveTo(margin, y);
+                    ctx.lineTo(canvas.width - margin, y);
+                    ctx.stroke();
+                }
+                
+                // Draw training loss curve
+                if (this.trainingLoss.length > 0) {
+                    ctx.strokeStyle = '#3498db';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    this.trainingLoss.forEach((loss, index) => {
+                        const x = margin + (index / (this.maxEpochs - 1)) * plotWidth;
+                        const y = canvas.height - margin - (loss * plotHeight);
+                        
+                        if (index === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+                    ctx.stroke();
+                }
+                
+                // Draw validation loss curve
+                if (this.validationLoss.length > 0) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    this.validationLoss.forEach((loss, index) => {
+                        const x = margin + (index / (this.maxEpochs - 1)) * plotWidth;
+                        const y = canvas.height - margin - (loss * plotHeight);
+                        
+                        if (index === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+                    ctx.stroke();
+                }
+                
+                // Labels
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Epochs', canvas.width / 2, canvas.height - 10);
+                
+                ctx.save();
+                ctx.translate(20, canvas.height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('Loss', 0, 0);
+                ctx.restore();
+                
+                // Legend
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(margin, margin - 30, 20, 10);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('Training', margin + 30, margin - 20);
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(margin + 100, margin - 30, 20, 10);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('Validation', margin + 130, margin - 20);
+            }
+
+            drawOverfittingViz() {
+                const canvas = document.getElementById('overfittingCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const margin = 30;
+                const plotWidth = canvas.width - 2 * margin;
+                const plotHeight = canvas.height - 2 * margin;
+                
+                // Draw overfitting gap visualization
+                if (this.trainingLoss.length > 0 && this.validationLoss.length > 0) {
+                    const lastTrainLoss = this.trainingLoss[this.trainingLoss.length - 1];
+                    const lastValLoss = this.validationLoss[this.validationLoss.length - 1];
+                    const gap = Math.abs(lastTrainLoss - lastValLoss);
+                    
+                    // Draw gap indicator
+                    const gapWidth = Math.min(gap * plotWidth * 2, plotWidth * 0.8);
+                    const gapHeight = 20;
+                    const gapY = canvas.height / 2 - gapHeight / 2;
+                    
+                    if (gap > 0.1) {
+                        ctx.fillStyle = '#e74c3c'; // Red for overfitting
+                    } else if (gap > 0.05) {
+                        ctx.fillStyle = '#f39c12'; // Orange for warning
+                    } else {
+                        ctx.fillStyle = '#27ae60'; // Green for good
+                    }
+                    
+                    ctx.fillRect(margin, gapY, gapWidth, gapHeight);
+                    
+                    // Add text
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`Gap: ${gap.toFixed(3)}`, canvas.width / 2, gapY - 10);
+                    
+                    if (gap > 0.1) {
+                        ctx.fillText('OVERFITTING!', canvas.width / 2, gapY + gapHeight + 20);
+                    } else if (gap > 0.05) {
+                        ctx.fillText('Watch out!', canvas.width / 2, gapY + gapHeight + 20);
+                    } else {
+                        ctx.fillText('Good fit', canvas.width / 2, gapY + gapHeight + 20);
+                    }
+                }
+            }
+
+            updateStats() {
+                if (this.trainingLoss.length > 0) {
+                    document.getElementById('trainLoss').textContent = this.trainingLoss[this.trainingLoss.length - 1].toFixed(3);
+                    document.getElementById('trainAcc').textContent = (this.trainingAcc[this.trainingAcc.length - 1] * 100).toFixed(1) + '%';
+                }
+                
+                if (this.validationLoss.length > 0) {
+                    document.getElementById('valLoss').textContent = this.validationLoss[this.validationLoss.length - 1].toFixed(3);
+                    document.getElementById('valAcc').textContent = (this.validationAcc[this.validationAcc.length - 1] * 100).toFixed(1) + '%';
+                }
+            }
+
+            updateEpochIndicator() {
+                for (let i = 1; i <= 10; i++) {
+                    const dot = document.getElementById(`epoch${i}`);
+                    dot.classList.remove('active', 'completed');
+                    
+                    if (i < this.currentEpoch) {
+                        dot.classList.add('completed');
+                    } else if (i === this.currentEpoch) {
+                        dot.classList.add('active');
+                    }
+                }
+            }
+
+            async startTraining() {
+                if (this.isTraining) return;
+                
+                this.isTraining = true;
+                this.currentEpoch = 0;
+                this.trainingLoss = [];
+                this.validationLoss = [];
+                this.trainingAcc = [];
+                this.validationAcc = [];
+                
+                document.getElementById('statusText').textContent = 'Training...';
+                
+                const maxEpochs = parseInt(document.getElementById('epochs').value);
+                
+                for (let epoch = 1; epoch <= maxEpochs; epoch++) {
+                    if (!this.isTraining) break;
+                    
+                    this.currentEpoch = epoch;
+                    
+                    // Simulate training
+                    const trainLoss = Math.max(0.1, 1.0 * Math.exp(-epoch * 0.3) + Math.random() * 0.1);
+                    const valLoss = Math.max(0.15, 1.0 * Math.exp(-epoch * 0.25) + Math.random() * 0.15);
+                    const trainAcc = Math.min(0.95, 0.3 + epoch * 0.06 + Math.random() * 0.05);
+                    const valAcc = Math.min(0.90, 0.25 + epoch * 0.05 + Math.random() * 0.08);
+                    
+                    this.trainingLoss.push(trainLoss);
+                    this.validationLoss.push(valLoss);
+                    this.trainingAcc.push(trainAcc);
+                    this.validationAcc.push(valAcc);
+                    
+                    this.drawLossCurves();
+                    this.drawOverfittingViz();
+                    this.updateStats();
+                    this.updateEpochIndicator();
+                    
+                    // Update progress
+                    const progress = (epoch / maxEpochs) * 100;
+                    document.getElementById('trainingProgress').style.width = progress + '%';
+                    document.getElementById('currentEpoch').textContent = epoch;
+                    
+                    await this.sleep(1000);
+                }
+                
+                this.isTraining = false;
+                document.getElementById('statusText').textContent = 'Training completed';
+            }
+
+            pauseTraining() {
+                this.isTraining = false;
+                document.getElementById('statusText').textContent = 'Training paused';
+            }
+
+            stopTraining() {
+                this.isTraining = false;
+                document.getElementById('statusText').textContent = 'Training stopped';
+            }
+
+            resetTraining() {
+                this.isTraining = false;
+                this.currentEpoch = 0;
+                this.trainingLoss = [];
+                this.validationLoss = [];
+                this.trainingAcc = [];
+                this.validationAcc = [];
+                
+                document.getElementById('statusText').textContent = 'Ready to train';
+                document.getElementById('trainingProgress').style.width = '0%';
+                document.getElementById('currentEpoch').textContent = '0';
+                
+                this.drawLossCurves();
+                this.drawOverfittingViz();
+                this.updateStats();
+                this.updateEpochIndicator();
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        const visualizer = new TrainingVisualizer();
+
+        function startTraining() {
+            visualizer.startTraining();
+        }
+
+        function pauseTraining() {
+            visualizer.pauseTraining();
+        }
+
+        function stopTraining() {
+            visualizer.stopTraining();
+        }
+
+        function resetTraining() {
+            visualizer.resetTraining();
+        }
+    </script>
+</body>
+</html>

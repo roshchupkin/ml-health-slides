@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bias and Variance in ML</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, #ffd89b, #19547b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .concept-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .concept-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #ffd89b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .bias-icon {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+
+        .variance-icon {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+        }
+
+        .concept-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .examples {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .examples h4 {
+            color: #ffd89b;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .examples ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .examples li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .examples li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #ffd89b;
+            font-weight: bold;
+        }
+
+        .tradeoff-section {
+            background: linear-gradient(45deg, rgba(255, 107, 107, 0.2), rgba(78, 52, 212, 0.2));
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tradeoff-title {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffd89b;
+        }
+
+        .tradeoff-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .tradeoff-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tradeoff-item h4 {
+            color: #ffd89b;
+            margin-bottom: 10px;
+        }
+
+        .formula-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .formula {
+            font-size: 1.4rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            color: #ffd89b;
+            border: 2px solid rgba(255, 216, 155, 0.3);
+        }
+
+        .key-points {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .key-point {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #ffd89b;
+        }
+
+        .key-point h4 {
+            color: #ffd89b;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid, .tradeoff-grid, .key-points {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .slide-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <h1>Bias and Variance in Machine Learning</h1>
+        
+        <div class="content-grid">
+            <div class="concept-card">
+                <h2 class="concept-title">
+                    <span class="icon bias-icon">B</span>
+                    Bias
+                </h2>
+                <p class="concept-description">
+                    <strong>Bias</strong> measures how far off our model's predictions are from the true values on average. 
+                    High bias means the model is too simple and misses important patterns in the data.
+                </p>
+                <div class="examples">
+                    <h4>High Bias Examples:</h4>
+                    <ul>
+                        <li>Linear regression on non-linear data</li>
+                        <li>Underfitting the training data</li>
+                        <li>Model assumptions too restrictive</li>
+                        <li>Consistent systematic errors</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="concept-card">
+                <h2 class="concept-title">
+                    <span class="icon variance-icon">V</span>
+                    Variance
+                </h2>
+                <p class="concept-description">
+                    <strong>Variance</strong> measures how much our model's predictions change when trained on different datasets. 
+                    High variance means the model is too sensitive to small changes in training data.
+                </p>
+                <div class="examples">
+                    <h4>High Variance Examples:</h4>
+                    <ul>
+                        <li>Deep neural networks with insufficient data</li>
+                        <li>Overfitting to training data</li>
+                        <li>Model too complex for dataset size</li>
+                        <li>Predictions vary wildly with new data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="formula-section">
+            <h3 style="color: #ffd89b; margin-bottom: 20px;">The Bias-Variance Decomposition</h3>
+            <div class="formula">
+                Total Error = Bias² + Variance + Irreducible Error
+            </div>
+            <p style="margin-top: 15px; font-size: 1.1rem;">
+                This fundamental equation shows that prediction error comes from three sources: 
+                systematic bias, model variance, and inherent noise in the data.
+            </p>
+        </div>
+
+        <div class="tradeoff-section">
+            <h3 class="tradeoff-title">The Bias-Variance Tradeoff</h3>
+            <p style="text-align: center; font-size: 1.1rem; margin-bottom: 20px;">
+                As model complexity increases, bias typically decreases while variance increases. 
+                The goal is finding the optimal balance.
+            </p>
+            
+            <div class="tradeoff-grid">
+                <div class="tradeoff-item">
+                    <h4>Simple Models</h4>
+                    <p>High Bias<br>Low Variance<br><em>Underfitting</em></p>
+                </div>
+                <div class="tradeoff-item">
+                    <h4>Optimal Models</h4>
+                    <p>Balanced Bias<br>Balanced Variance<br><em>Good Generalization</em></p>
+                </div>
+                <div class="tradeoff-item">
+                    <h4>Complex Models</h4>
+                    <p>Low Bias<br>High Variance<br><em>Overfitting</em></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="key-points">
+            <div class="key-point">
+                <h4>🎯 Reducing Bias</h4>
+                <ul>
+                    <li>Use more complex models</li>
+                    <li>Add more features</li>
+                    <li>Reduce regularization</li>
+                    <li>Increase model flexibility</li>
+                </ul>
+            </div>
+            <div class="key-point">
+                <h4>📊 Reducing Variance</h4>
+                <ul>
+                    <li>Use more training data</li>
+                    <li>Apply regularization</li>
+                    <li>Use ensemble methods</li>
+                    <li>Simplify the model</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

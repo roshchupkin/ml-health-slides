@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backpropagation: The Learning Process</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #a0aec0;
+            font-weight: 300;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .visualization-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .network-canvas {
+            width: 100%;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .controls-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #a0aec0;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #4a5568;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card h4 {
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .info-card p {
+            color: #e2e8f0;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .gradient-flow {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-title {
+            color: #fbbf24;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .gradient-canvas {
+            width: 100%;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .chain-rule {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .chain-rule h3 {
+            color: #fbbf24;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .chain-rule p {
+            color: #e2e8f0;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #81e6d9;
+            text-align: center;
+            margin: 10px 0;
+            display: block;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4a5568;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: #667eea;
+            transform: scale(1.2);
+        }
+
+        .step-dot.completed {
+            background: #48bb78;
+        }
+
+        .loss-surface {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loss-canvas {
+            width: 100%;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .animation-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .animation-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: transparent;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .animation-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .animation-btn.active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Backpropagation: The Learning Process</h1>
+            <p>Understanding how neural networks learn through gradient descent and the chain rule</p>
+        </div>
+
+        <div class="main-content">
+            <div class="visualization-section">
+                <div class="section-title">Network & Gradient Flow</div>
+                <canvas class="network-canvas" id="networkCanvas"></canvas>
+                
+                <div class="step-indicator">
+                    <div class="step-dot active" id="step1"></div>
+                    <div class="step-dot" id="step2"></div>
+                    <div class="step-dot" id="step3"></div>
+                    <div class="step-dot" id="step4"></div>
+                    <div class="step-dot" id="step5"></div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="startBackpropagation()">Start Backpropagation</button>
+                    <button class="btn btn-secondary" onclick="resetAnimation()">Reset</button>
+                    <button class="btn btn-primary" onclick="stepForward()">Step Forward</button>
+                </div>
+
+                <div class="animation-controls">
+                    <button class="animation-btn" onclick="setAnimationSpeed(1)">Slow</button>
+                    <button class="animation-btn active" onclick="setAnimationSpeed(2)">Normal</button>
+                    <button class="animation-btn" onclick="setAnimationSpeed(4)">Fast</button>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <div class="section-title">Learning Parameters</div>
+                
+                <div class="control-group">
+                    <label for="learningRate">Learning Rate: <span id="lrValue">0.1</span></label>
+                    <input type="range" id="learningRate" min="0.01" max="0.5" step="0.01" value="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label for="targetOutput">Target Output: <span id="targetValue">1.0</span></label>
+                    <input type="range" id="targetOutput" min="0" max="1" step="0.1" value="1.0">
+                </div>
+
+                <div class="info-card">
+                    <h4>Current Step</h4>
+                    <p id="currentStepText">Ready to start backpropagation</p>
+                </div>
+
+                <div class="info-card">
+                    <h4>Loss Function</h4>
+                    <p>Mean Squared Error (MSE): L = ½(y_pred - y_true)²</p>
+                    <div class="formula">Current Loss: <span id="currentLoss">0.00</span></div>
+                </div>
+
+                <div class="gradient-flow">
+                    <div class="gradient-title">Gradient Flow Visualization</div>
+                    <canvas class="gradient-canvas" id="gradientCanvas"></canvas>
+                    <p style="text-align: center; color: #a0aec0; font-size: 0.9rem;">
+                        Watch how gradients flow backward through the network
+                    </p>
+                </div>
+
+                <div class="chain-rule">
+                    <h3>Chain Rule in Action</h3>
+                    <p>The chain rule allows us to compute gradients for nested functions:</p>
+                    <div class="formula">∂L/∂w = ∂L/∂y × ∂y/∂z × ∂z/∂w</div>
+                    <p>Where:</p>
+                    <ul style="color: #e2e8f0; margin-left: 20px; font-size: 0.9rem;">
+                        <li>L = Loss function</li>
+                        <li>y = Network output</li>
+                        <li>z = Weighted sum before activation</li>
+                        <li>w = Weight parameter</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="loss-surface">
+            <div class="section-title">Loss Surface & Gradient Descent</div>
+            <canvas class="loss-canvas" id="lossCanvas"></canvas>
+            <p style="text-align: center; color: #a0aec0; margin-top: 15px;">
+                The optimization landscape shows how the loss changes with different weight values
+            </p>
+        </div>
+    </div>
+
+    <script>
+        class BackpropagationVisualizer {
+            constructor() {
+                this.network = {
+                    layers: [
+                        { type: 'input', neurons: 2, values: [0.5, 0.3] },
+                        { type: 'hidden', neurons: 3, values: [0, 0, 0], weights: [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]], biases: [0.1, 0.2, 0.3] },
+                        { type: 'output', neurons: 1, values: [0], weights: [[0.7, 0.8, 0.9]], biases: [0.4] }
+                    ]
+                };
+                this.currentStep = 0;
+                this.animationSpeed = 2;
+                this.isAnimating = false;
+                this.targetOutput = 1.0;
+                this.learningRate = 0.1;
+                this.gradients = [];
+                
+                this.initializeVisualizations();
+            }
+
+            initializeVisualizations() {
+                this.drawNetwork();
+                this.drawGradientFlow();
+                this.drawLossSurface();
+                this.updateStepIndicator();
+            }
+
+            drawNetwork() {
+                const canvas = document.getElementById('networkCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const layerWidth = canvas.width / 4;
+                const neuronRadius = 20;
+                
+                // Draw connections
+                ctx.strokeStyle = '#4a5568';
+                ctx.lineWidth = 1;
+                
+                // Input to hidden connections
+                for (let i = 0; i < 2; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        const fromX = layerWidth;
+                        const fromY = canvas.height / 3 + i * 60;
+                        const toX = layerWidth * 2;
+                        const toY = canvas.height / 4 + j * 50;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(fromX + neuronRadius, fromY);
+                        ctx.lineTo(toX - neuronRadius, toY);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Hidden to output connections
+                for (let i = 0; i < 3; i++) {
+                    const fromX = layerWidth * 2;
+                    const fromY = canvas.height / 4 + i * 50;
+                    const toX = layerWidth * 3;
+                    const toY = canvas.height / 2;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(fromX + neuronRadius, fromY);
+                    ctx.lineTo(toX - neuronRadius, toY);
+                    ctx.stroke();
+                }
+                
+                // Draw neurons
+                this.network.layers.forEach((layer, layerIndex) => {
+                    const x = layerWidth * (layerIndex + 1);
+                    const neuronSpacing = canvas.height / (layer.neurons + 1);
+                    
+                    // Layer title
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(layer.type.toUpperCase(), x, 30);
+                    
+                    // Neurons
+                    for (let i = 0; i < layer.neurons; i++) {
+                        const y = neuronSpacing * (i + 1);
+                        
+                        // Neuron circle
+                        ctx.fillStyle = this.getNeuronColor(layer.type);
+                        ctx.beginPath();
+                        ctx.arc(x, y, neuronRadius, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        // Neuron value
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(layer.values[i]?.toFixed(2) || '0.00', x, y + 4);
+                    }
+                });
+            }
+
+            getNeuronColor(type) {
+                switch(type) {
+                    case 'input': return '#3498db';
+                    case 'hidden': return '#9b59b6';
+                    case 'output': return '#e74c3c';
+                    default: return '#95a5a6';
+                }
+            }
+
+            drawGradientFlow() {
+                const canvas = document.getElementById('gradientCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw gradient arrows
+                if (this.currentStep > 0) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([5, 5]);
+                    
+                    // Draw backward arrows
+                    for (let i = 0; i < this.currentStep; i++) {
+                        const y = canvas.height / 2;
+                        const x1 = canvas.width - 50 - i * 80;
+                        const x2 = x1 - 60;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y);
+                        ctx.lineTo(x2, y);
+                        ctx.stroke();
+                        
+                        // Arrow head
+                        ctx.beginPath();
+                        ctx.moveTo(x2, y);
+                        ctx.lineTo(x2 + 10, y - 5);
+                        ctx.lineTo(x2 + 10, y + 5);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+                
+                ctx.setLineDash([]);
+                
+                // Labels
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Output', canvas.width - 30, canvas.height / 2 - 20);
+                ctx.fillText('Hidden', canvas.width - 110, canvas.height / 2 - 20);
+                ctx.fillText('Input', canvas.width - 190, canvas.height / 2 - 20);
+            }
+
+            drawLossSurface() {
+                const canvas = document.getElementById('lossCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const margin = 40;
+                const plotWidth = canvas.width - 2 * margin;
+                const plotHeight = canvas.height - 2 * margin;
+                
+                // Draw axes
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(margin, canvas.height - margin);
+                ctx.lineTo(canvas.width - margin, canvas.height - margin);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(margin, margin);
+                ctx.lineTo(margin, canvas.height - margin);
+                ctx.stroke();
+                
+                // Draw loss surface (simplified 2D)
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let i = 0; i < plotWidth; i++) {
+                    const x = (i / plotWidth) * 4 - 2; // -2 to 2
+                    const y = Math.pow(x - 0.5, 2) + 0.1; // Parabolic loss
+                    const canvasX = margin + i;
+                    const canvasY = canvas.height - margin - y * plotHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(canvasX, canvasY);
+                    } else {
+                        ctx.lineTo(canvasX, canvasY);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw current position
+                const currentX = margin + plotWidth * 0.3;
+                const currentY = canvas.height - margin - 0.1 * plotHeight;
+                
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(currentX, currentY, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Labels
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Weight', canvas.width / 2, canvas.height - 10);
+                ctx.fillText('Loss', 20, canvas.height / 2);
+            }
+
+            updateStepIndicator() {
+                const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+                steps.forEach((stepId, index) => {
+                    const step = document.getElementById(stepId);
+                    step.classList.remove('active', 'completed');
+                    
+                    if (index < this.currentStep) {
+                        step.classList.add('completed');
+                    } else if (index === this.currentStep) {
+                        step.classList.add('active');
+                    }
+                });
+            }
+
+            async startBackpropagation() {
+                if (this.isAnimating) return;
+                
+                this.isAnimating = true;
+                this.currentStep = 0;
+                
+                const steps = [
+                    'Forward Pass: Computing network output',
+                    'Loss Calculation: Computing error',
+                    'Output Layer: Computing gradients',
+                    'Hidden Layer: Backpropagating gradients',
+                    'Weight Update: Applying gradient descent'
+                ];
+                
+                for (let i = 0; i < steps.length; i++) {
+                    this.currentStep = i;
+                    document.getElementById('currentStepText').textContent = steps[i];
+                    this.updateStepIndicator();
+                    this.drawGradientFlow();
+                    
+                    // Simulate computation
+                    await this.sleep(2000 / this.animationSpeed);
+                }
+                
+                this.isAnimating = false;
+                this.updateLoss();
+            }
+
+            stepForward() {
+                if (this.currentStep < 4) {
+                    this.currentStep++;
+                    this.updateStepIndicator();
+                    this.drawGradientFlow();
+                    
+                    const steps = [
+                        'Forward Pass: Computing network output',
+                        'Loss Calculation: Computing error',
+                        'Output Layer: Computing gradients',
+                        'Hidden Layer: Backpropagating gradients',
+                        'Weight Update: Applying gradient descent'
+                    ];
+                    
+                    document.getElementById('currentStepText').textContent = steps[this.currentStep];
+                }
+            }
+
+            resetAnimation() {
+                this.currentStep = 0;
+                this.isAnimating = false;
+                this.updateStepIndicator();
+                this.drawGradientFlow();
+                document.getElementById('currentStepText').textContent = 'Ready to start backpropagation';
+            }
+
+            setAnimationSpeed(speed) {
+                this.animationSpeed = speed;
+                document.querySelectorAll('.animation-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+
+            updateLoss() {
+                const predicted = this.network.layers[2].values[0];
+                const loss = 0.5 * Math.pow(predicted - this.targetOutput, 2);
+                document.getElementById('currentLoss').textContent = loss.toFixed(4);
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        const visualizer = new BackpropagationVisualizer();
+
+        function startBackpropagation() {
+            visualizer.startBackpropagation();
+        }
+
+        function resetAnimation() {
+            visualizer.resetAnimation();
+        }
+
+        function stepForward() {
+            visualizer.stepForward();
+        }
+
+        function setAnimationSpeed(speed) {
+            visualizer.setAnimationSpeed(speed);
+        }
+
+        // Update learning rate
+        document.getElementById('learningRate').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('lrValue').textContent = value.toFixed(2);
+            visualizer.learningRate = value;
+        });
+
+        // Update target output
+        document.getElementById('targetOutput').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('targetValue').textContent = value.toFixed(1);
+            visualizer.targetOutput = value;
+            visualizer.updateLoss();
+        });
+    </script>
+</body>
+</html>

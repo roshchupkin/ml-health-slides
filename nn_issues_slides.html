@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Issues & Solutions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .presentation-container {
+            width: 95%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            padding: 60px;
+            min-height: 700px;
+            position: relative;
+        }
+
+        .slide.active {
+            display: block;
+            animation: slideIn 0.5s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .slide h2 {
+            color: #4a5568;
+            font-size: 2em;
+            margin: 30px 0 20px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .slide h3 {
+            color: #718096;
+            font-size: 1.4em;
+            margin: 20px 0 15px 0;
+        }
+
+        .problem {
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 6px solid #e53e3e;
+        }
+
+        .solution {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 6px solid #38a169;
+        }
+
+        .technique {
+            background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #3182ce;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .nav-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .slide-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        ul {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .title-slide p {
+            font-size: 1.3em;
+            color: #718096;
+            margin: 10px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: #f7fafc;
+            font-weight: bold;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ed8936;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="slide-counter">
+            <span id="currentSlide">1</span> / <span id="totalSlides">8</span>
+        </div>
+
+        <!-- Slide 1: Title -->
+        <div class="slide active title-slide">
+            <h1>Neural Network Common Issues & Solutions</h1>
+            <p>Understanding and Fixing Training Problems</p>
+            <p style="margin-top: 40px; font-size: 1.1em;">🧠 Deep Learning Fundamentals</p>
+        </div>
+
+        <!-- Slide 2: Overview -->
+        <div class="slide">
+            <h1>Common Neural Network Issues</h1>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 40px;">
+                <div>
+                    <h3>🔴 Training Issues</h3>
+                    <ul>
+                        <li>Gradient Vanishing/Exploding</li>
+                        <li>Overfitting</li>
+                        <li>Underfitting</li>
+                        <li>Slow Convergence</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>⚡ Optimization Issues</h3>
+                    <ul>
+                        <li>Poor Weight Initialization</li>
+                        <li>Learning Rate Problems</li>
+                        <li>Activation Function Issues</li>
+                        <li>Batch Size Effects</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight">
+                <strong>Key Point:</strong> Most issues stem from improper gradient flow, poor regularization, or suboptimal hyperparameters.
+            </div>
+        </div>
+
+        <!-- Slide 3: Gradient Vanishing -->
+        <div class="slide">
+            <h1>Gradient Vanishing Problem</h1>
+            
+            <div class="problem">
+                <h3>🔴 Problem</h3>
+                <p>Gradients become exponentially smaller as they propagate backward through deep networks, especially with sigmoid/tanh activations.</p>
+                <p><strong>Result:</strong> Early layers learn very slowly or stop learning entirely.</p>
+            </div>
+
+            <div class="solution">
+                <h3>✅ Solutions</h3>
+                <div class="technique">
+                    <strong>1. Better Activation Functions</strong>
+                    <div class="code-block">
+# Replace sigmoid/tanh with ReLU variants
+import torch.nn as nn
+
+# Instead of: nn.Sigmoid() or nn.Tanh()
+nn.ReLU()           # Standard ReLU
+nn.LeakyReLU(0.01)  # Leaky ReLU
+nn.ELU()            # Exponential Linear Unit
+nn.GELU()           # Gaussian Error Linear Unit
+                    </div>
+                </div>
+                
+                <div class="technique">
+                    <strong>2. Proper Weight Initialization</strong>
+                    <div class="code-block">
+# Xavier/Glorot initialization
+nn.init.xavier_uniform_(layer.weight)
+
+# He initialization (for ReLU)
+nn.init.kaiming_uniform_(layer.weight, mode='fan_in', nonlinearity='relu')
+                    </div>
+                </div>
+
+                <div class="technique">
+                    <strong>3. Residual Connections</strong>
+                    <div class="code-block">
+# Skip connections allow gradients to flow directly
+class ResidualBlock(nn.Module):
+    def forward(self, x):
+        residual = x
+        out = self.conv1(x)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out += residual  # Skip connection
+        return self.relu(out)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Gradient Exploding -->
+        <div class="slide">
+            <h1>Gradient Exploding Problem</h1>
+            
+            <div class="problem">
+                <h3>🔴 Problem</h3>
+                <p>Gradients become exponentially larger during backpropagation, causing unstable training and NaN values.</p>
+                <p><strong>Symptoms:</strong> Loss shoots to infinity, weights become NaN, training diverges.</p>
+            </div>
+
+            <div class="solution">
+                <h3>✅ Solutions</h3>
+                <div class="technique">
+                    <strong>1. Gradient Clipping</strong>
+                    <div class="code-block">
+# Clip gradients by norm
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+# Clip gradients by value
+torch.nn.utils.clip_grad_value_(model.parameters(), clip_value=0.5)
+
+# In training loop:
+optimizer.zero_grad()
+loss.backward()
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+optimizer.step()
+                    </div>
+                </div>
+                
+                <div class="technique">
+                    <strong>2. Lower Learning Rates</strong>
+                    <div class="code-block">
+# Start with smaller learning rates
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)  # Instead of 1e-2
+
+# Use learning rate scheduling
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+                    </div>
+                </div>
+
+                <div class="technique">
+                    <strong>3. Batch Normalization</strong>
+                    <div class="code-block">
+# Normalize inputs to each layer
+class NormalizedNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 64, 3)
+        self.bn1 = nn.BatchNorm2d(64)  # Batch normalization
+        self.relu = nn.ReLU()
+    
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)  # Normalize before activation
+        x = self.relu(x)
+        return x
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Overfitting -->
+        <div class="slide">
+            <h1>Overfitting</h1>
+            
+            <div class="problem">
+                <h3>🔴 Problem</h3>
+                <p>Model memorizes training data but fails to generalize to new data.</p>
+                <p><strong>Signs:</strong> Training accuracy >> Validation accuracy, large gap between train/val loss.</p>
+            </div>
+
+            <div class="solution">
+                <h3>✅ Solutions</h3>
+                <div class="technique">
+                    <strong>1. Dropout</strong>
+                    <div class="code-block">
+# Randomly set neurons to zero during training
+class DropoutNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(784, 256)
+        self.dropout1 = nn.Dropout(0.5)  # 50% dropout
+        self.fc2 = nn.Linear(256, 10)
+    
+    def forward(self, x):
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.dropout1(x)  # Only active during training
+        x = self.fc2(x)
+        return x
+                    </div>
+                </div>
+                
+                <div class="technique">
+                    <strong>2. L1/L2 Regularization</strong>
+                    <div class="code-block">
+# Add regularization to optimizer
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-4)  # L2
+
+# Manual L1 regularization
+def l1_regularization(model, lambda_l1):
+    l1_norm = sum(p.abs().sum() for p in model.parameters())
+    return lambda_l1 * l1_norm
+
+# In loss calculation:
+loss = criterion(outputs, targets) + l1_regularization(model, 1e-5)
+                    </div>
+                </div>
+
+                <div class="technique">
+                    <strong>3. Early Stopping</strong>
+                    <div class="code-block">
+# Stop training when validation loss stops improving
+best_val_loss = float('inf')
+patience = 5
+patience_counter = 0
+
+for epoch in range(epochs):
+    # ... training code ...
+    
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        patience_counter = 0
+        torch.save(model.state_dict(), 'best_model.pth')
+    else:
+        patience_counter += 1
+        if patience_counter >= patience:
+            print("Early stopping!")
+            break
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Underfitting -->
+        <div class="slide">
+            <h1>Underfitting</h1>
+            
+            <div class="problem">
+                <h3>🔴 Problem</h3>
+                <p>Model is too simple to capture underlying patterns in the data.</p>
+                <p><strong>Signs:</strong> Both training and validation accuracy are low, high bias.</p>
+            </div>
+
+            <div class="solution">
+                <h3>✅ Solutions</h3>
+                <div class="technique">
+                    <strong>1. Increase Model Complexity</strong>
+                    <div class="code-block">
+# Add more layers or neurons
+class LargerNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(784, 512),    # Increase hidden units
+            nn.ReLU(),
+            nn.Linear(512, 256),    # Add more layers
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 10)
+        )
+                    </div>
+                </div>
+                
+                <div class="technique">
+                    <strong>2. Reduce Regularization</strong>
+                    <div class="code-block">
+# Lower dropout rates
+nn.Dropout(0.2)  # Instead of 0.5
+
+# Reduce weight decay
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-6)  # Lower
+                    </div>
+                </div>
+
+                <div class="technique">
+                    <strong>3. Feature Engineering</strong>
+                    <div class="code-block">
+# Add polynomial features or feature interactions
+from sklearn.preprocessing import PolynomialFeatures
+
+# Create polynomial features
+poly = PolynomialFeatures(degree=2, include_bias=False)
+X_poly = poly.fit_transform(X)
+
+# Or use more sophisticated architectures (CNN for images, RNN for sequences)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Learning Rate Issues -->
+        <div class="slide">
+            <h1>Learning Rate Problems</h1>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="problem">
+                    <h3>🔴 Too High</h3>
+                    <ul>
+                        <li>Loss oscillates wildly</li>
+                        <li>Training diverges</li>
+                        <li>Overshoots minima</li>
+                    </ul>
+                </div>
+                
+                <div class="problem">
+                    <h3>🔴 Too Low</h3>
+                    <ul>
+                        <li>Very slow convergence</li>
+                        <li>Gets stuck in local minima</li>
+                        <li>Training plateaus early</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="solution">
+                <h3>✅ Solutions</h3>
+                <div class="technique">
+                    <strong>1. Learning Rate Scheduling</strong>
+                    <div class="code-block">
+# Step decay
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+
+# Cosine annealing
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50)
+
+# Reduce on plateau
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
+
+# In training loop:
+for epoch in range(epochs):
+    # ... training code ...
+    scheduler.step()  # or scheduler.step(val_loss) for ReduceLROnPlateau
+                    </div>
+                </div>
+                
+                <div class="technique">
+                    <strong>2. Adaptive Optimizers</strong>
+                    <div class="code-block">
+# Use optimizers with adaptive learning rates
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)  # Good default
+# or
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
+# or
+optimizer = torch.optim.RMSprop(model.parameters(), lr=1e-3)
+                    </div>
+                </div>
+
+                <div class="technique">
+                    <strong>3. Learning Rate Finder</strong>
+                    <div class="code-block">
+# Find optimal learning rate range
+def find_lr(model, train_loader, optimizer, criterion):
+    lrs = []
+    losses = []
+    lr = 1e-8
+    
+    for batch_idx, (data, target) in enumerate(train_loader):
+        optimizer.param_groups[0]['lr'] = lr
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        
+        lrs.append(lr)
+        losses.append(loss.item())
+        lr *= 1.1  # Exponentially increase
+        
+        if lr > 1:
+            break
+    
+    # Plot and find the steepest descent
+    plt.plot(lrs, losses)
+    plt.xscale('log')
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Summary -->
+        <div class="slide">
+            <h1>Summary & Best Practices</h1>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <h3>🎯 Prevention Checklist</h3>
+                    <ul>
+                        <li>✅ Use ReLU-family activations</li>
+                        <li>✅ Proper weight initialization</li>
+                        <li>✅ Batch normalization</li>
+                        <li>✅ Gradient clipping</li>
+                        <li>✅ Dropout for regularization</li>
+                        <li>✅ Early stopping</li>
+                        <li>✅ Learning rate scheduling</li>
+                        <li>✅ Monitor train/val metrics</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3>🔧 Debugging Workflow</h3>
+                    <ol>
+                        <li><strong>Check data:</strong> Normalize inputs, verify labels</li>
+                        <li><strong>Start simple:</strong> Small model first</li>
+                        <li><strong>Monitor gradients:</strong> Use gradient norms</li>
+                        <li><strong>Validate assumptions:</strong> Plot loss curves</li>
+                        <li><strong>Iterative improvement:</strong> One change at a time</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="highlight" style="margin-top: 40px;">
+                <h3>💡 Key Takeaway</h3>
+                <p>Most neural network issues can be prevented with proper architecture design, initialization, and hyperparameter tuning. Always start with proven defaults and adjust based on your specific problem!</p>
+            </div>
+
+            <div class="code-block" style="margin-top: 30px;">
+# Template for robust neural network
+class RobustNet(nn.Module):
+    def __init__(self, input_size, hidden_size, num_classes, dropout=0.3):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size, hidden_size//2),
+            nn.BatchNorm1d(hidden_size//2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_size//2, num_classes)
+        )
+        
+        # He initialization
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
+    
+    def forward(self, x):
+        return self.network(x)
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+    </div>
+
+    <script>
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = index + 1;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            const newIndex = currentSlideIndex + direction;
+            if (newIndex >= 0 && newIndex < totalSlides) {
+                currentSlideIndex = newIndex;
+                showSlide(currentSlideIndex);
+            }
+        }
+
+        // Initialize
+        showSlide(0);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K-Fold Cross-Validation — Interactive Learning Tool</title>
+<style>
+  :root{
+    --page-bg:#f8fafc;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+
+    --header-bg:#f1f5f9;
+    --header-text:#334155;
+
+    --train:#dcfce7;
+    --train-border:#22c55e;
+
+    --val:#dbeafe;
+    --val-border:#3b82f6;
+
+    --test:#fef3c7;
+    --test-border:#f59e0b;
+
+    --active-outline:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Ubuntu,sans-serif;line-height:1.6}
+  .wrap{max-width:1400px;margin:0 auto;padding:32px}
+  h1{margin:0 0 8px;font-size:clamp(32px,4vw,48px);font-weight:700;color:#1e293b}
+  .subtitle{color:var(--muted); margin:0 0 24px;font-size:18px;line-height:1.5}
+  
+  .intro-box{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);padding:24px;border-radius:16px;border-left:6px solid #0284c7;margin-bottom:24px;}
+  .intro-box h3{margin:0 0 12px;color:#0c4a6e;font-size:20px;}
+  .intro-box p{color:#0c4a6e;margin:0;line-height:1.6;}
+  
+  .controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;color:var(--muted);margin-bottom:24px;padding:20px;background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+  .controls label{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .controls input[type="range"]{width:180px;height:6px;border-radius:3px;background:#e2e8f0;outline:none}
+  .controls input[type="range"]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#3b82f6;cursor:pointer}
+  .controls select,.controls button{border:2px solid var(--border); background:#fff; color:var(--text); padding:10px 16px; border-radius:12px; font-weight:600; cursor:pointer;font-size:14px;transition:all 0.2s}
+  .controls select:hover,.controls button:hover{background:#f8fafc;border-color:#cbd5e1}
+  .controls button{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .controls button:hover{background:#2563eb;border-color:#2563eb}
+  
+  .layout{display:grid; grid-template-columns: 2fr 1fr; gap:24px; align-items:start}
+  .diagram{background:#fff; padding:28px; border-radius:20px; border:1px solid var(--border); position:relative;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+  .panel{background:#fff; padding:24px; border-radius:20px; border:1px solid var(--border);box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+
+  .bar{height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--header-text); border:2px solid #cbd5e1; background:var(--header-bg);font-size:14px}
+  .bar + .bar{margin-top:18px}
+
+  .split{display:grid; grid-template-columns: 80% 20%; gap:12px; align-items:center; margin-top:18px}
+  .split .train{background:var(--train); border:2px solid var(--train-border);color:#166534}
+  .split .test{background:var(--test); border:2px solid var(--test-border);color:#92400e}
+
+  .whole{display:grid; grid-template-columns: 70% 10% 20%; gap:12px; margin-top:16px}
+  .whole .trainIter{background:var(--train); border:2px solid var(--train-border);color:#166534}
+  .whole .valIter{background:var(--val); border:2px solid var(--val-border);color:#1e40af}
+  .whole .testIter{background:var(--test); border:2px solid var(--test-border);color:#92400e}
+
+  .rows{margin-top:24px; display:grid; gap:14px}
+  .row{display:grid; grid-template-columns:repeat(var(--k,5), 1fr); gap:12px; align-items:center}
+  .pill{
+    height:50px; display:flex; align-items:center; justify-content:center;
+    border-radius:12px; font-weight:700; color:#1e293b; background:#fff; border:2px solid #cbd5e1;
+    font-size:14px;transition:all 0.2s;cursor:pointer
+  }
+  .pill:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(0,0,0,0.1)}
+  .pill.header{background:var(--header-bg); color:var(--header-text);font-weight:800}
+  .pill.train{background:var(--train); border-color:var(--train-border);color:#166534}
+  .pill.val{background:var(--val); border-color:var(--val-border);color:#1e40af}
+
+  .active-row{outline:3px dashed var(--active-outline); outline-offset:6px;border-radius:16px;padding:4px}
+
+  .legend{display:flex; gap:16px; align-items:center; color:var(--muted); font-size:15px; margin-top:20px;padding:16px;background:#f8fafc;border-radius:12px}
+  .dot{width:16px;height:16px;border-radius:6px; display:inline-block; margin-right:8px; border:2px solid var(--border)}
+  .legend .lg{display:flex; align-items:center;font-weight:600}
+
+  .stats{font-size:15px; color:var(--muted)}
+  .stats table{width:100%; border-collapse:collapse; margin-top:12px; font-size:14px}
+  .stats th,.stats td{border-bottom:1px solid var(--border); padding:12px 8px; text-align:right}
+  .stats th:first-child,.stats td:first-child{text-align:left;font-weight:600}
+  .stats th{background:#f8fafc;font-weight:700;color:#374151}
+  .badge{display:inline-block; background:#e0e7ff; color:#3730a3; padding:4px 12px; border-radius:20px; font-weight:700; font-size:13px}
+  
+  .explanation-box{background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:16px;border-radius:12px;border-left:4px solid #22c55e;margin-top:16px}
+  .explanation-box h4{margin:0 0 8px;color:#166534;font-size:16px;font-weight:700}
+  .explanation-box p{margin:0;color:#166534;font-size:14px;line-height:1.5}
+  
+  .concept-box{background:linear-gradient(135deg,#fef3c7,#fde68a);padding:12px;border-radius:8px;border-left:3px solid #f59e0b;margin:8px 0;font-size:13px;color:#92400e}
+  .concept-box strong{font-weight:700}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>K-Fold Cross-Validation — Interactive Learning Tool</h1>
+    <p class="subtitle">Understand how K-fold cross-validation works by visualizing the data splits and training process</p>
+
+    <div class="intro-box">
+      <h3>🎯 What is K-Fold Cross-Validation?</h3>
+      <p>K-fold cross-validation is a technique to assess how well a machine learning model will generalize to new data. It divides the training data into K equal parts (folds), then trains and validates the model K times, each time using a different fold as validation data.</p>
+    </div>
+
+    <div class="controls">
+      <label>K (folds):
+        <select id="kSel">
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+        </select>
+      </label>
+      <label>Samples: <input id="nRange" type="range" min="100" max="5000" step="100" value="1000"> <span id="nVal">1000</span></label>
+      <label>Test split: <input id="testRange" type="range" min="0" max="50" step="5" value="20"> <span id="testPct">20%</span></label>
+      <button id="animateBtn">▶ Animate</button>
+      <button id="stepBtn">Step</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="layout">
+      <div id="diagram" class="diagram">
+        <div class="bar">All Data</div>
+
+        <!-- Train/Test split (proportional) -->
+        <div id="splitRow" class="split">
+          <div id="trainBar" class="bar train">Training data</div>
+          <div id="testBar" class="bar test">Test data (held out)</div>
+        </div>
+
+        <!-- Whole-dataset view for current iteration -->
+        <div class="bar" style="margin-top:16px; background:#fff; color:var(--muted); border-style:dashed">Current Iteration (Whole Dataset View)</div>
+        <div id="wholeRow" class="whole">
+          <div id="trainIter" class="bar trainIter">Train used this iter</div>
+          <div id="valIter"   class="bar valIter">Validation</div>
+          <div id="testIter"  class="bar testIter">Test</div>
+        </div>
+
+        <div class="rows">
+          <div id="headerRow" class="row" style="--k:5"></div>
+          <div id="foldRows"></div>
+        </div>
+        
+        <!-- Final step visualization -->
+        <div style="margin-top:24px;padding:20px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:16px;border-left:6px solid #0284c7;">
+          <h4 style="margin:0 0 12px;color:#0c4a6e;font-size:18px;font-weight:700;">🎯 Final Step: Test Set Evaluation</h4>
+          <div style="display:grid;grid-template-columns:80% 20%;gap:12px;align-items:center;margin-top:12px;">
+            <div style="height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#166534;border:2px solid #22c55e;background:#dcfce7;font-size:13px;">
+              Train final model on ALL training data
+            </div>
+            <div style="height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#92400e;border:2px solid #f59e0b;background:#fef3c7;font-size:13px;">
+              Evaluate on test set
+            </div>
+          </div>
+          <p style="margin:12px 0 0;color:#0c4a6e;font-size:14px;line-height:1.5;">
+            <strong>This happens only once!</strong> After K-fold CV helps you select the best model configuration, you train the final model on the complete training dataset and get your unbiased performance estimate from the test set.
+          </p>
+        </div>
+
+        <div class="legend">
+          <span class="lg"><span class="dot" style="background:var(--header-bg)"></span>Header (fold index)</span>
+          <span class="lg"><span class="dot" style="background:var(--train)"></span>Training</span>
+          <span class="lg"><span class="dot" style="background:var(--val)"></span>Validation</span>
+          <span class="lg"><span class="dot" style="background:var(--test)"></span>Held-out Test</span>
+        </div>
+        
+        <div class="explanation-box" id="explanationBox">
+          <h4>📚 How K-Fold Cross-Validation Works</h4>
+          <div id="explanationText">
+            <p><strong>Step 1:</strong> The data is split into training and test sets. The test set is completely held out and never used during cross-validation.</p>
+            
+            <div class="concept-box">
+              <strong>💡 Key Concept:</strong> K-fold CV only operates on the training data. The test set remains untouched for final evaluation.
+            </div>
+            
+            <p><strong>Step 2:</strong> The training data is divided into K equal folds. In each iteration, one fold serves as validation while the remaining K-1 folds are used for training.</p>
+            
+            <p><strong>Step 3:</strong> This process repeats K times, with each fold taking a turn as the validation set. The final performance is the average of all K validation scores.</p>
+            
+            <div style="background:linear-gradient(135deg,#fef2f2,#fecaca);padding:16px;border-radius:12px;border-left:4px solid #dc2626;margin-top:16px;">
+              <h4 style="margin:0 0 8px;color:#991b1b;font-size:16px;font-weight:700;">🚨 When is the Test Set Used?</h4>
+              <p style="margin:0;color:#991b1b;font-size:14px;line-height:1.6;">
+                <strong>ONLY ONCE at the very end!</strong> After completing all K-fold cross-validation iterations and selecting the best model configuration, you train the final model on the <strong>entire training data</strong> and then evaluate it on the held-out test set. This gives you an unbiased estimate of how well your model will perform on completely unseen data.
+              </p>
+              <div style="background:#fee2e2;padding:12px;border-radius:8px;margin-top:12px;border-left:3px solid #ef4444;">
+                <strong style="color:#dc2626;">⚠️ Important:</strong> Never use the test set during model selection or hyperparameter tuning. It's your final, unbiased evaluation set!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel stats">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <b style="font-size:18px;color:#1e293b">Data Distribution</b>
+          <span class="badge">Iteration <span id="currentIter">1</span>/<span id="totalIter">5</span></span>
+        </div>
+        <div id="counts"></div>
+        <hr style="border:0;border-top:1px solid var(--border); margin:20px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <b style="font-size:18px;color:#1e293b">Validation Performance</b>
+          <span class="badge" id="summaryBadge">Mean —</span>
+        </div>
+        <table id="perfTable">
+          <thead>
+            <tr><th>Iteration</th><th>Validation Score</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        
+        <div style="background:linear-gradient(135deg,#fef7ed,#fed7aa);padding:16px;border-radius:12px;border-left:4px solid #ea580c;margin-top:20px;">
+          <h4 style="margin:0 0 8px;color:#9a3412;font-size:16px;font-weight:700;">🎯 Benefits of K-Fold CV</h4>
+          <ul style="margin:8px 0;padding-left:20px;color:#9a3412;font-size:14px;line-height:1.6;">
+            <li><strong>Robust evaluation:</strong> Uses all data for both training and validation</li>
+            <li><strong>Reduced variance:</strong> Average of K estimates is more stable</li>
+            <li><strong>Better generalization:</strong> More reliable performance estimate</li>
+            <li><strong>No data waste:</strong> Every data point contributes to both training and validation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const kSel = document.getElementById('kSel');
+  const nRange = document.getElementById('nRange');
+  const nVal = document.getElementById('nVal');
+  const testRange = document.getElementById('testRange');
+  const testPct = document.getElementById('testPct');
+
+  const headerRow = document.getElementById('headerRow');
+  const foldRows = document.getElementById('foldRows');
+  const splitRow = document.getElementById('splitRow');
+  const wholeRow = document.getElementById('wholeRow');
+
+  const countsDiv = document.getElementById('counts');
+  const perfTable = document.getElementById('perfTable').querySelector('tbody');
+  const summaryBadge = document.getElementById('summaryBadge');
+  const currentIter = document.getElementById('currentIter');
+  const totalIter = document.getElementById('totalIter');
+
+  const animateBtn = document.getElementById('animateBtn');
+  const stepBtn = document.getElementById('stepBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  let K = parseInt(kSel.value,10);
+  let N = parseInt(nRange.value,10);
+  let pctTest = parseInt(testRange.value,10);
+  let tmr = null;
+  let rowIdx = 0;
+  let perf = []; // validation metric per iteration
+
+  function fmtPct(x){ return (Math.round(x*10)/10)+'%'; }
+  function rnd(seed){ // deterministic pseudo-random from integer seed
+    let x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+  function recomputePerformance(){
+    perf = [];
+    // base mean increases slightly with more training data, decreases with more folds a tiny bit
+    const trainFrac = 1 - pctTest/100;
+    const base = 0.78 + 0.18*trainFrac - 0.02*Math.log10(K);
+    for(let i=0;i<K;i++){
+      const noise = (rnd( (K*1000 + pctTest*10 + i*97) ) - 0.5) * 0.04; // +/-0.02 range
+      const val = Math.max(0, Math.min(1, base + noise));
+      perf.push(val);
+    }
+  }
+  function summarizePerformance(){
+    const mean = perf.reduce((a,b)=>a+b,0)/perf.length;
+    const sd = Math.sqrt(perf.reduce((s,v)=>s+(v-mean)*(v-mean),0)/perf.length);
+    summaryBadge.textContent = 'Mean '+(mean*100).toFixed(1)+'% • SD '+(sd*100).toFixed(1)+'%';
+  }
+  function renderPerfTable(){
+    perfTable.innerHTML = '';
+    for(let i=0;i<perf.length;i++){
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.textContent = (i+1);
+      const td2 = document.createElement('td'); td2.textContent = (perf[i]*100).toFixed(1)+'%';
+      tr.appendChild(td1); tr.appendChild(td2);
+      perfTable.appendChild(tr);
+    }
+  }
+
+  function layoutBars(){
+    const trainPct = Math.max(0, 100 - pctTest);
+    splitRow.style.gridTemplateColumns = trainPct + '% ' + pctTest + '%';
+    // Whole-dataset iteration view:
+    const valPct = trainPct / K;
+    const trainIterPct = trainPct - valPct;
+    wholeRow.style.gridTemplateColumns = trainIterPct + '% ' + valPct + '% ' + pctTest + '%';
+    testPct.textContent = pctTest + '%';
+  }
+
+  function buildHeader(){
+    headerRow.style.setProperty('--k', K);
+    headerRow.innerHTML = '';
+    for(let i=0;i<K;i++){
+      const p = document.createElement('div');
+      p.className = 'pill header';
+      p.textContent = 'Fold ' + (i+1);
+      headerRow.appendChild(p);
+    }
+  }
+
+  function buildRows(){
+    foldRows.innerHTML = '';
+    for(let r=0;r<K;r++){
+      const row = document.createElement('div');
+      row.className='row';
+      row.style.setProperty('--k', K);
+      for(let c=0;c<K;c++){
+        const p = document.createElement('div');
+        p.className = 'pill ' + (c===r ? 'val' : 'train');
+        p.textContent = 'Fold ' + (c+1);
+        row.appendChild(p);
+      }
+      foldRows.appendChild(row);
+    }
+    colorizeActive();
+  }
+
+  function colorizeActive(){
+    const rows = foldRows.children;
+    for(let r=0;r<K;r++){
+      const row = rows[r];
+      const pills = row.children;
+      for(let c=0;c<K;c++){
+        pills[c].className = 'pill ' + (c===r ? 'val' : 'train');
+      }
+      row.classList.toggle('active-row', r===rowIdx);
+    }
+    // Update iteration counter
+    currentIter.textContent = (rowIdx + 1);
+    totalIter.textContent = K;
+  }
+
+  function renderCounts(){
+    const testN = Math.round(N * (pctTest/100));
+    const trainN = N - testN;
+    const valN = Math.floor(trainN / K);
+    const trainIterN = trainN - valN;
+    countsDiv.innerHTML = `
+      <div>Samples: <b>${N}</b></div>
+      <div>Train total: <b>${trainN}</b> (${fmtPct(100 - pctTest)})</div>
+      <div>Test total: <b>${testN}</b> (${fmtPct(pctTest)})</div>
+      <div style="margin-top:6px">Per iteration:</div>
+      <div>• Train used: <b>${trainIterN}</b> (${fmtPct((100 - pctTest) * (K-1)/K)})</div>
+      <div>• Validation: <b>${valN}</b> (${fmtPct((100 - pctTest) / K)})</div>
+    `;
+  }
+
+  function step(){
+    rowIdx = (rowIdx + 1) % K;
+    colorizeActive();
+  }
+
+  function play(){
+    if(tmr){ stop(); return; }
+    animateBtn.textContent = '⏸ Pause';
+    tmr = setInterval(step, 1200);
+  }
+  function stop(){
+    if(tmr){ clearInterval(tmr); tmr=null; }
+    animateBtn.textContent = '▶ Animate';
+  }
+  function reset(){
+    stop();
+    rowIdx = 0;
+    layoutBars();
+    buildHeader();
+    buildRows();
+    renderCounts();
+    recomputePerformance();
+    renderPerfTable();
+    summarizePerformance();
+  }
+
+  // Bindings
+  kSel.onchange = ()=>{ K = parseInt(kSel.value,10); reset(); };
+  nRange.oninput = ()=>{ N = parseInt(nRange.value,10); nVal.textContent = N; };
+  nRange.onchange = ()=> reset();
+  testRange.oninput = ()=>{ pctTest = parseInt(testRange.value,10); layoutBars(); renderCounts(); recomputePerformance(); renderPerfTable(); summarizePerformance(); };
+  animateBtn.onclick = ()=> play();
+  stepBtn.onclick = ()=> step();
+  resetBtn.onclick = ()=> reset();
+
+  // init
+  nVal.textContent = N; reset();
+})();
+</script>
+</body>
+</html>

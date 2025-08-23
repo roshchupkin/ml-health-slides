@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimization Algorithms</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .slide {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .algorithms-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .algorithm-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algorithm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .gradient-descent { border-top: 5px solid #e74c3c; }
+        .momentum { border-top: 5px solid #f39c12; }
+        .rmsprop { border-top: 5px solid #3498db; }
+        .adam { border-top: 5px solid #27ae60; }
+
+        .algorithm-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .algorithm-icon {
+            font-size: 2.5em;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+        }
+
+        .gradient-descent .algorithm-icon {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .momentum .algorithm-icon {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .rmsprop .algorithm-icon {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .adam .algorithm-icon {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .algorithm-title {
+            color: #2c3e50;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .algorithm-description {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #495057;
+            margin: 15px 0;
+        }
+
+        .visualization {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .path-demo {
+            width: 100%;
+            height: 120px;
+            position: relative;
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .ball {
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            animation-duration: 4s;
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+        }
+
+        .gradient-descent .ball {
+            animation-name: gradientPath;
+            background: #e74c3c;
+        }
+
+        .momentum .ball {
+            animation-name: momentumPath;
+            background: #f39c12;
+        }
+
+        .rmsprop .ball {
+            animation-name: rmspropPath;
+            background: #3498db;
+        }
+
+        .adam .ball {
+            animation-name: adamPath;
+            background: #27ae60;
+        }
+
+        @keyframes gradientPath {
+            0% { left: 10px; top: 20px; }
+            25% { left: 25%; top: 40px; }
+            50% { left: 50%; top: 60px; }
+            75% { left: 75%; top: 80px; }
+            100% { left: 90%; top: 100px; }
+        }
+
+        @keyframes momentumPath {
+            0% { left: 10px; top: 20px; }
+            20% { left: 30%; top: 35px; }
+            40% { left: 55%; top: 50px; }
+            60% { left: 75%; top: 70px; }
+            80% { left: 85%; top: 90px; }
+            100% { left: 90%; top: 100px; }
+        }
+
+        @keyframes rmspropPath {
+            0% { left: 10px; top: 20px; }
+            30% { left: 20%; top: 45px; }
+            60% { left: 60%; top: 55px; }
+            100% { left: 90%; top: 100px; }
+        }
+
+        @keyframes adamPath {
+            0% { left: 10px; top: 20px; }
+            25% { left: 35%; top: 30px; }
+            50% { left: 65%; top: 45px; }
+            75% { left: 85%; top: 70px; }
+            100% { left: 90%; top: 100px; }
+        }
+
+        .key-features {
+            background: rgba(108, 117, 125, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+
+        .feature-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .comparison-item h4 {
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+        }
+
+        .rating {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            margin: 10px 0;
+        }
+
+        .star {
+            font-size: 1.2em;
+        }
+
+        .filled { color: #ffd700; }
+        .empty { color: rgba(255, 255, 255, 0.3); }
+
+        .formula-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 5px solid #007bff;
+        }
+
+        .formula-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .formula-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .formula-box h4 {
+            margin: 0 0 15px 0;
+            color: #495057;
+        }
+
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1em;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .algorithms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .formula-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <h1>🚀 Optimization Algorithms</h1>
+        
+        <div class="algorithms-grid">
+            <div class="algorithm-card gradient-descent">
+                <div class="algorithm-header">
+                    <div class="algorithm-icon">📉</div>
+                    <h3 class="algorithm-title">Gradient Descent</h3>
+                </div>
+                
+                <p class="algorithm-description">
+                    Iterative method to minimize error by adjusting model parameters. 
+                    Moves in the direction that reduces the error the most (downhill).
+                </p>
+                
+                <div class="visualization">
+                    <div class="path-demo">
+                        <div class="ball"></div>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #666;">
+                        Steady descent path - consistent but can be slow
+                    </p>
+                </div>
+                
+                <div class="key-features">
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #e74c3c;">✓</div>
+                        Simple and reliable
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #e74c3c;">△</div>
+                        Can be slow on flat surfaces
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #e74c3c;">⚠</div>
+                        May get stuck in local minima
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card momentum">
+                <div class="algorithm-header">
+                    <div class="algorithm-icon">⚡</div>
+                    <h3 class="algorithm-title">Momentum</h3>
+                </div>
+                
+                <p class="algorithm-description">
+                    Adds inertia to Gradient Descent for faster convergence. 
+                    Helps avoid getting stuck in small dips by carrying momentum from previous steps.
+                </p>
+                
+                <div class="visualization">
+                    <div class="path-demo">
+                        <div class="ball"></div>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #666;">
+                        Accelerated path - builds speed and overshoots valleys
+                    </p>
+                </div>
+                
+                <div class="key-features">
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #f39c12;">✓</div>
+                        Faster convergence
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #f39c12;">✓</div>
+                        Escapes local minima
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #f39c12;">⚠</div>
+                        Can overshoot optimum
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card rmsprop">
+                <div class="algorithm-header">
+                    <div class="algorithm-icon">📊</div>
+                    <h3 class="algorithm-title">RMSprop</h3>
+                </div>
+                
+                <p class="algorithm-description">
+                    Adjusts the learning rate based on the steepness of the error surface. 
+                    Takes smaller steps on steep slopes and larger steps on shallow slopes.
+                </p>
+                
+                <div class="visualization">
+                    <div class="path-demo">
+                        <div class="ball"></div>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #666;">
+                        Adaptive path - adjusts step size based on terrain
+                    </p>
+                </div>
+                
+                <div class="key-features">
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #3498db;">✓</div>
+                        Adaptive learning rate
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #3498db;">✓</div>
+                        Handles different scales well
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #3498db;">△</div>
+                        Learning rate can decay too fast
+                    </div>
+                </div>
+            </div>
+
+            <div class="algorithm-card adam">
+                <div class="algorithm-header">
+                    <div class="algorithm-icon">🎯</div>
+                    <h3 class="algorithm-title">Adam</h3>
+                </div>
+                
+                <p class="algorithm-description">
+                    Combines Momentum and RMSprop for efficient and stable learning. 
+                    Adjusts step sizes and remembers past movements for smarter updates.
+                </p>
+                
+                <div class="visualization">
+                    <div class="path-demo">
+                        <div class="ball"></div>
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #666;">
+                        Optimal path - combines speed and adaptivity
+                    </p>
+                </div>
+                
+                <div class="key-features">
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #27ae60;">✓</div>
+                        Best of both worlds
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #27ae60;">✓</div>
+                        Robust and efficient
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon" style="background: #27ae60;">✓</div>
+                        Most popular choice
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-section">
+            <h3 style="margin-top: 0; font-size: 1.8em;">📈 Performance Comparison</h3>
+            <p style="margin-bottom: 30px; font-size: 1.1em;">How each algorithm performs across different criteria</p>
+            
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <h4>Gradient Descent</h4>
+                    <div><strong>Speed:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                    <div><strong>Stability:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                    </div>
+                </div>
+                
+                <div class="comparison-item">
+                    <h4>Momentum</h4>
+                    <div><strong>Speed:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                    <div><strong>Stability:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                
+                <div class="comparison-item">
+                    <h4>RMSprop</h4>
+                    <div><strong>Speed:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                    <div><strong>Stability:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                
+                <div class="comparison-item">
+                    <h4>Adam</h4>
+                    <div><strong>Speed:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                    </div>
+                    <div><strong>Stability:</strong></div>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="formula-section">
+            <h3 style="margin-top: 0; color: #007bff;">🔢 Mathematical Formulations</h3>
+            
+            <div class="formula-grid">
+                <div class="formula-box">
+                    <h4>Gradient Descent</h4>
+                    <div class="formula">
+                        θ = θ - α∇J(θ)
+                    </div>
+                    <p style="font-size: 0.9em; color: #666; margin: 5px 0;">
+                        Simple parameter update with learning rate α
+                    </p>
+                </div>
+                
+                <div class="formula-box">
+                    <h4>Momentum</h4>
+                    <div class="formula">
+                        v = βv + α∇J(θ)<br>
+                        θ = θ - v
+                    </div>
+                    <p style="font-size: 0.9em; color: #666; margin: 5px 0;">
+                        Adds velocity term with momentum β
+                    </p>
+                </div>
+                
+                <div class="formula-box">
+                    <h4>RMSprop</h4>
+                    <div class="formula">
+                        E[g²] = βE[g²] + (1-β)g²<br>
+                        θ = θ - α·g/√(E[g²] + ε)
+                    </div>
+                    <p style="font-size: 0.9em; color: #666; margin: 5px 0;">
+                        Adapts learning rate based on gradient magnitude
+                    </p>
+                </div>
+                
+                <div class="formula-box">
+                    <h4>Adam</h4>
+                    <div class="formula">
+                        m = β₁m + (1-β₁)g<br>
+                        v = β₂v + (1-β₂)g²<br>
+                        θ = θ - α·m̂/√(v̂ + ε)
+                    </div>
+                    <p style="font-size: 0.9em; color: #666; margin: 5px 0;">
+                        Combines momentum and adaptive learning rates
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

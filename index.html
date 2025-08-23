@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Science for Epidemiology - Interactive Slides</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .slides-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .category {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .category h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .slide-link {
+            display: block;
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .slide-link:hover {
+            background: #667eea;
+            color: white;
+            border-left-color: #764ba2;
+            transform: translateX(5px);
+        }
+
+        .slide-link .title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .slide-link .description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-fix {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .slides-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Machine Learning for Health Research</h1>
+            <p>Interactive Learning Slides - Day 2</p>
+            <p style="font-size: 1rem; margin-top: 10px;">Prof. Gennady Roshchupkin</p>
+        </div>
+
+        <div class="slides-grid">
+            <!-- Core ML Concepts -->
+            <div class="category">
+                <h2>🤖 Core Machine Learning Concepts</h2>
+                <a href="ml_algorithms_slide.html" class="slide-link">
+                    <div class="title">ML Algorithms Overview</div>
+                    <div class="description">Introduction to machine learning algorithms and their applications</div>
+                </a>
+                <a href="ml_algorithms_geometric_v3.html" class="slide-link">
+                    <div class="title">Geometric Interpretation of ML</div>
+                    <div class="description">Visual understanding of machine learning algorithms</div>
+                </a>
+                <a href="ml_cost_loss_viz.html" class="slide-link">
+                    <div class="title">Cost Functions & Loss Visualization</div>
+                    <div class="description">Understanding optimization through cost functions</div>
+                </a>
+                <a href="optimization_algorithms_slide.html" class="slide-link">
+                    <div class="title">Optimization Algorithms</div>
+                    <div class="description">Different approaches to model optimization</div>
+                </a>
+            </div>
+
+            <!-- Model Evaluation -->
+            <div class="category">
+                <h2>📊 Model Evaluation & Validation</h2>
+                <a href="bias_variance_slide.html" class="slide-link">
+                    <div class="title">Bias-Variance Tradeoff</div>
+                    <div class="description">Understanding model complexity and generalization</div>
+                </a>
+                <a href="bias_variance_slide_healthcare.html" class="slide-link">
+                    <div class="title">Bias-Variance in Healthcare</div>
+                    <div class="description">Healthcare-specific examples of bias-variance tradeoff</div>
+                </a>
+                <a href="roc_curve_slide.html" class="slide-link">
+                    <div class="title">ROC Curves & Performance Metrics</div>
+                    <div class="description">Evaluating classification model performance</div>
+                </a>
+            </div>
+
+            <!-- Cross-Validation -->
+            <div class="category">
+                <h2>🔄 Cross-Validation Techniques</h2>
+                <a href="kfold_style_blocks_v3.html" class="slide-link">
+                    <div class="title">K-Fold Cross-Validation</div>
+                    <div class="description">Interactive visualization of k-fold validation</div>
+                </a>
+                <a href="nested_cv_blocks_v2.html" class="slide-link">
+                    <div class="title">Nested Cross-Validation</div>
+                    <div class="description">Advanced validation for hyperparameter tuning</div>
+                </a>
+                <a href="cross_validation_training_viz_FIXED.html" class="slide-link">
+                    <div class="title">Training Process Visualization</div>
+                    <div class="description">Visual guide to the training and validation process</div>
+                </a>
+            </div>
+
+            <!-- Hyperparameter Tuning -->
+            <div class="category">
+                <h2>⚙️ Hyperparameter Optimization</h2>
+                <a href="ml_hyperparameters_guide.html" class="slide-link">
+                    <div class="title">Hyperparameter Tuning Guide</div>
+                    <div class="description">Comprehensive guide to optimizing model parameters</div>
+                </a>
+            </div>
+
+            <!-- Ensemble Methods -->
+            <div class="category">
+                <h2>🎯 Ensemble Learning</h2>
+                <a href="ensemble_viz_click_v2.html" class="slide-link">
+                    <div class="title">Ensemble Methods Interactive</div>
+                    <div class="description">Interactive exploration of ensemble learning techniques</div>
+                </a>
+            </div>
+
+            <!-- Neural Networks -->
+            <div class="category">
+                <h2>🧠 Neural Networks</h2>
+                <a href="nn_vs_classical_ml_training.html" class="slide-link">
+                    <div class="title">NN vs Classical ML Training</div>
+                    <div class="description">Training approaches comparison between neural networks and classical ML</div>
+                </a>
+                <a href="nn_training_slides.html" class="slide-link">
+                    <div class="title">Neural Network Training Slides</div>
+                    <div class="description">Comprehensive guide to neural network training process</div>
+                </a>
+                <a href="nn_parameter_growth_slide.html" class="slide-link">
+                    <div class="title">Parameter Growth in Neural Networks</div>
+                    <div class="description">Understanding how parameters scale with network size</div>
+                </a>
+                <a href="nn_issues_slides.html" class="slide-link">
+                    <div class="title">Neural Network Issues & Challenges</div>
+                    <div class="description">Common problems and solutions in neural network training</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 Machine Learning for Health Research Course | Erasmus MC</p>
+            <p>Interactive slides designed for enhanced learning experience</p>
+        </div>
+    </div>
+
+    <script>
+        // Add smooth scrolling and some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click tracking for analytics (if needed)
+            const links = document.querySelectorAll('.slide-link');
+            links.forEach(link => {
+                link.addEventListener('click', function() {
+                    // You can add analytics tracking here
+                    console.log('Navigating to:', this.href);
+                });
+            });
+
+            // Add some subtle animations
+            const categories = document.querySelectorAll('.category');
+            categories.forEach((category, index) => {
+                category.style.opacity = '0';
+                category.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    category.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    category.style.opacity = '1';
+                    category.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

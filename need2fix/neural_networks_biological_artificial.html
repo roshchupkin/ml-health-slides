@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Networks: From Biological to Artificial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #a0aec0;
+            font-weight: 300;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .neuron-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .neuron-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .neuron-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .biological .neuron-title {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+
+        .artificial .neuron-title {
+            background: linear-gradient(135deg, #4834d4, #686de0);
+        }
+
+        .visualization-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+
+        .description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+            margin-top: 20px;
+        }
+
+        .description h4 {
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            color: #a0aec0;
+            font-weight: 500;
+        }
+
+        .control-group input[type="range"] {
+            width: 150px;
+            height: 6px;
+            border-radius: 3px;
+            background: #4a5568;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .activation-functions {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            margin-top: 40px;
+        }
+
+        .activation-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .function-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .function-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .function-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fbbf24;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .function-canvas {
+            width: 100%;
+            height: 150px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #81e6d9;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .info-box h3 {
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .info-box p {
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Neural Networks: From Biological to Artificial</h1>
+            <p>Understanding how artificial neurons mimic biological neural networks</p>
+        </div>
+
+        <div class="comparison-container">
+            <div class="neuron-card biological">
+                <div class="neuron-title">Biological Neuron</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="biologicalCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works:</h4>
+                    <p>Dendrites receive signals from other neurons. The cell body integrates these signals. If the combined signal exceeds a threshold, the neuron fires an action potential through the axon to other neurons.</p>
+                </div>
+            </div>
+
+            <div class="neuron-card artificial">
+                <div class="neuron-title">Artificial Neuron (Perceptron)</div>
+                <div class="visualization-container">
+                    <canvas class="canvas" id="artificialCanvas"></canvas>
+                </div>
+                <div class="description">
+                    <h4>How it works:</h4>
+                    <p>Inputs (x₁, x₂, ...) are weighted (w₁, w₂, ...) and summed. A bias (b) is added. The result passes through an activation function to produce the output.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="input1">Input 1: <span id="input1Value">0.5</span></label>
+                <input type="range" id="input1" min="-2" max="2" step="0.1" value="0.5">
+            </div>
+            <div class="control-group">
+                <label for="input2">Input 2: <span id="input2Value">0.3</span></label>
+                <input type="range" id="input2" min="-2" max="2" step="0.1" value="0.3">
+            </div>
+            <div class="control-group">
+                <label for="weight1">Weight 1: <span id="weight1Value">1.0</span></label>
+                <input type="range" id="weight1" min="-3" max="3" step="0.1" value="1.0">
+            </div>
+            <div class="control-group">
+                <label for="weight2">Weight 2: <span id="weight2Value">0.8</span></label>
+                <input type="range" id="weight2" min="-3" max="3" step="0.1" value="0.8">
+            </div>
+            <div class="control-group">
+                <label for="bias">Bias: <span id="biasValue">-0.2</span></label>
+                <input type="range" id="bias" min="-2" max="2" step="0.1" value="-0.2">
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>Key Similarities</h3>
+            <p><strong>Integration:</strong> Both biological and artificial neurons combine multiple inputs into a single output.</p>
+            <p><strong>Threshold:</strong> Both have a threshold mechanism - biological neurons fire when membrane potential exceeds threshold, artificial neurons activate when weighted sum exceeds bias.</p>
+            <p><strong>Non-linearity:</strong> Both introduce non-linearity - biological through action potential generation, artificial through activation functions.</p>
+        </div>
+
+        <div class="activation-functions">
+            <div class="activation-title">Common Activation Functions</div>
+            <div class="function-grid">
+                <div class="function-card">
+                    <div class="function-name">Sigmoid</div>
+                    <canvas class="function-canvas" id="sigmoidCanvas"></canvas>
+                    <div class="formula">σ(x) = 1 / (1 + e^(-x))</div>
+                </div>
+                <div class="function-card">
+                    <div class="function-name">ReLU</div>
+                    <canvas class="function-canvas" id="reluCanvas"></canvas>
+                    <div class="formula">ReLU(x) = max(0, x)</div>
+                </div>
+                <div class="function-card">
+                    <div class="function-name">Tanh</div>
+                    <canvas class="function-canvas" id="tanhCanvas"></canvas>
+                    <div class="formula">tanh(x) = (e^x - e^(-x)) / (e^x + e^(-x))</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Biological Neuron Visualization
+        function drawBiologicalNeuron() {
+            const canvas = document.getElementById('biologicalCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Draw dendrites
+            ctx.strokeStyle = '#4A90E2';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 5; i++) {
+                const angle = (i - 2) * 0.3;
+                const startX = centerX - 80;
+                const startY = centerY + (i - 2) * 20;
+                const endX = centerX - 20;
+                const endY = centerY + (i - 2) * 15;
+                
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                
+                // Draw input signals
+                ctx.fillStyle = '#E74C3C';
+                ctx.beginPath();
+                ctx.arc(startX - 10, startY, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            
+            // Draw cell body
+            ctx.fillStyle = '#F39C12';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#E67E22';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw nucleus
+            ctx.fillStyle = '#8E44AD';
+            ctx.beginPath();
+            ctx.arc(centerX - 5, centerY - 5, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw axon
+            ctx.strokeStyle = '#27AE60';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(centerX + 25, centerY);
+            ctx.lineTo(centerX + 80, centerY);
+            ctx.stroke();
+            
+            // Draw axon terminals
+            for (let i = 0; i < 3; i++) {
+                const y = centerY + (i - 1) * 15;
+                ctx.beginPath();
+                ctx.moveTo(centerX + 80, centerY);
+                ctx.lineTo(centerX + 100, y);
+                ctx.stroke();
+                
+                // Draw output signals
+                ctx.fillStyle = '#E74C3C';
+                ctx.beginPath();
+                ctx.arc(centerX + 105, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            
+            // Add labels
+            ctx.fillStyle = '#2C3E50';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Dendrites', centerX - 50, centerY - 40);
+            ctx.fillText('Cell Body', centerX, centerY - 40);
+            ctx.fillText('Axon', centerX + 50, centerY - 40);
+        }
+
+        // Artificial Neuron Visualization
+        function drawArtificialNeuron() {
+            const canvas = document.getElementById('artificialCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Draw inputs
+            ctx.fillStyle = '#3498DB';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('x₁', centerX - 80, centerY - 30);
+            ctx.fillText('x₂', centerX - 80, centerY + 10);
+            
+            // Draw weights
+            ctx.fillStyle = '#E74C3C';
+            ctx.fillText('w₁', centerX - 40, centerY - 30);
+            ctx.fillText('w₂', centerX - 40, centerY + 10);
+            
+            // Draw multiplication symbols
+            ctx.fillStyle = '#2C3E50';
+            ctx.fillText('×', centerX - 60, centerY - 30);
+            ctx.fillText('×', centerX - 60, centerY + 10);
+            
+            // Draw summation
+            ctx.fillStyle = '#27AE60';
+            ctx.fillText('Σ', centerX, centerY - 10);
+            ctx.fillText('+ b', centerX + 20, centerY + 5);
+            
+            // Draw activation function
+            ctx.fillStyle = '#8E44AD';
+            ctx.fillText('f(·)', centerX + 60, centerY);
+            
+            // Draw output
+            ctx.fillStyle = '#F39C12';
+            ctx.fillText('y', centerX + 100, centerY);
+            
+            // Draw arrows
+            ctx.strokeStyle = '#2C3E50';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            
+            // Input arrows
+            ctx.beginPath();
+            ctx.moveTo(centerX - 90, centerY - 30);
+            ctx.lineTo(centerX - 70, centerY - 30);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX - 90, centerY + 10);
+            ctx.lineTo(centerX - 70, centerY + 10);
+            ctx.stroke();
+            
+            // Output arrow
+            ctx.beginPath();
+            ctx.moveTo(centerX + 70, centerY);
+            ctx.lineTo(centerX + 90, centerY);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // Draw neuron circle
+            ctx.strokeStyle = '#8E44AD';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 35, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+
+        // Activation Functions
+        function drawActivationFunction(canvasId, func, color) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const margin = 20;
+            const plotWidth = canvas.width - 2 * margin;
+            const plotHeight = canvas.height - 2 * margin;
+            
+            // Draw axes
+            ctx.strokeStyle = '#2C3E50';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin, canvas.height / 2);
+            ctx.lineTo(canvas.width - margin, canvas.height / 2);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, margin);
+            ctx.lineTo(canvas.width / 2, canvas.height - margin);
+            ctx.stroke();
+            
+            // Draw function
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            for (let i = 0; i < plotWidth; i++) {
+                const x = (i - plotWidth / 2) * 0.1;
+                const y = func(x);
+                const canvasX = margin + i;
+                const canvasY = canvas.height / 2 - y * plotHeight / 2;
+                
+                if (i === 0) {
+                    ctx.moveTo(canvasX, canvasY);
+                } else {
+                    ctx.lineTo(canvasX, canvasY);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // Activation function definitions
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-x));
+        }
+
+        function relu(x) {
+            return Math.max(0, x);
+        }
+
+        function tanh(x) {
+            return Math.tanh(x);
+        }
+
+        // Initialize visualizations
+        drawBiologicalNeuron();
+        drawArtificialNeuron();
+        drawActivationFunction('sigmoidCanvas', sigmoid, '#E74C3C');
+        drawActivationFunction('reluCanvas', relu, '#3498DB');
+        drawActivationFunction('tanhCanvas', tanh, '#27AE60');
+
+        // Interactive controls
+        function updateValues() {
+            const input1 = parseFloat(document.getElementById('input1').value);
+            const input2 = parseFloat(document.getElementById('input2').value);
+            const weight1 = parseFloat(document.getElementById('weight1').value);
+            const weight2 = parseFloat(document.getElementById('weight2').value);
+            const bias = parseFloat(document.getElementById('bias').value);
+            
+            document.getElementById('input1Value').textContent = input1.toFixed(1);
+            document.getElementById('input2Value').textContent = input2.toFixed(1);
+            document.getElementById('weight1Value').textContent = weight1.toFixed(1);
+            document.getElementById('weight2Value').textContent = weight2.toFixed(1);
+            document.getElementById('biasValue').textContent = bias.toFixed(1);
+            
+            // Calculate output
+            const weightedSum = input1 * weight1 + input2 * weight2 + bias;
+            const output = sigmoid(weightedSum);
+            
+            // Update artificial neuron visualization with current values
+            drawArtificialNeuron();
+        }
+
+        // Add event listeners
+        document.getElementById('input1').addEventListener('input', updateValues);
+        document.getElementById('input2').addEventListener('input', updateValues);
+        document.getElementById('weight1').addEventListener('input', updateValues);
+        document.getElementById('weight2').addEventListener('input', updateValues);
+        document.getElementById('bias').addEventListener('input', updateValues);
+
+        // Initial update
+        updateValues();
+    </script>
+</body>
+</html>
