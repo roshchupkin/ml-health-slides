@@ -453,12 +453,13 @@
                     <div class="step-dot" id="step5"></div>
                 </div>
 
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="startBackpropagation()">🚀 Start Training</button>
-                    <button class="btn btn-secondary" onclick="resetAnimation()">🔄 Reset</button>
-                    <button class="btn btn-primary" onclick="stepForward()">⏭️ Step Forward</button>
-                    <button class="btn btn-primary" onclick="trainMultipleSteps()">🏃‍♂️ Train 10 Steps</button>
-                </div>
+                                 <div class="button-group">
+                     <button class="btn btn-primary" onclick="startBackpropagation()">🚀 Start Training</button>
+                     <button class="btn btn-secondary" onclick="resetAnimation()">🔄 Reset</button>
+                     <button class="btn btn-primary" onclick="stepForward()">⏭️ Step Forward</button>
+                     <button class="btn btn-primary" onclick="trainMultipleSteps()">🏃‍♂️ Train 10 Steps</button>
+                     <button class="btn btn-secondary" onclick="testGlobalFunction()">🧪 Test Function</button>
+                 </div>
 
                 <div class="animation-controls">
                     <button class="animation-btn" onclick="setAnimationSpeed(1)">🐌 Slow</button>
@@ -538,6 +539,7 @@
     </div>
 
     <script>
+        console.log('Script loaded, defining BackpropagationVisualizer class...');
         class BackpropagationVisualizer {
             constructor() {
                 this.network = {
@@ -592,14 +594,18 @@
                     return;
                 }
                 
+                console.log('Drawing network, canvas size:', canvas.width, 'x', canvas.height);
+                
                 const ctx = canvas.getContext('2d');
                 
-                // Set canvas size properly
-                canvas.width = canvas.offsetWidth || 800;
-                canvas.height = canvas.offsetHeight || 500;
+                // Set canvas size properly - use fixed sizes for now
+                canvas.width = 800;
+                canvas.height = 500;
                 
                 const width = canvas.width;
                 const height = canvas.height;
+                
+                console.log('Canvas resized to:', width, 'x', height);
                 
                 // Clear canvas with subtle gradient background
                 const bgGradient = ctx.createLinearGradient(0, 0, width, height);
@@ -775,9 +781,9 @@
                 
                 const ctx = canvas.getContext('2d');
                 
-                // Set canvas size properly
-                canvas.width = canvas.offsetWidth || 400;
-                canvas.height = canvas.offsetHeight || 200;
+                // Set canvas size properly - use fixed sizes for now
+                canvas.width = 400;
+                canvas.height = 200;
                 
                 const width = canvas.width;
                 const height = canvas.height;
@@ -860,9 +866,9 @@
                 
                 const ctx = canvas.getContext('2d');
                 
-                // Set canvas size properly
-                canvas.width = canvas.offsetWidth || 600;
-                canvas.height = canvas.offsetHeight || 300;
+                // Set canvas size properly - use fixed sizes for now
+                canvas.width = 600;
+                canvas.height = 300;
                 
                 const width = canvas.width;
                 const height = canvas.height;
@@ -1322,6 +1328,7 @@
 
         // Global functions for buttons - with proper error handling
         function startBackpropagation() {
+            console.log('startBackpropagation called');
             if (!isInitialized) {
                 console.warn('Visualizer not yet initialized');
                 return;
@@ -1384,6 +1391,11 @@
             }
         }
 
+        // Test function to verify global scope
+        function testGlobalFunction() {
+            console.log('Global function test successful');
+        }
+
         function setupEventListeners() {
             // Learning rate control
             const learningRateInput = document.getElementById('learningRate');
@@ -1426,6 +1438,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing visualizer...');
             
+            // Check if canvas elements exist
+            const networkCanvas = document.getElementById('networkCanvas');
+            const gradientCanvas = document.getElementById('gradientCanvas');
+            const lossCanvas = document.getElementById('lossCanvas');
+            
+            console.log('Canvas elements found:', {
+                networkCanvas: !!networkCanvas,
+                gradientCanvas: !!gradientCanvas,
+                lossCanvas: !!lossCanvas
+            });
+            
             try {
                 // Create visualizer instance
                 visualizer = new BackpropagationVisualizer();
@@ -1454,3 +1477,14 @@
                 setTimeout(() => errorDiv.remove(), 5000);
             }
         });
+
+        // Verify global functions are available
+        console.log('Global functions defined:', {
+            startBackpropagation: typeof startBackpropagation,
+            resetAnimation: typeof resetAnimation,
+            stepForward: typeof stepForward,
+            setAnimationSpeed: typeof setAnimationSpeed,
+            trainMultipleSteps: typeof trainMultipleSteps,
+            testGlobalFunction: typeof testGlobalFunction
+        });
+    </script>
