@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Evaluation Metrics</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .slide {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            margin: 30px 0;
+        }
+
+        .metrics-table th {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metrics-table td {
+            padding: 20px 15px;
+            vertical-align: top;
+            border-bottom: 1px solid #ecf0f1;
+            transition: background-color 0.3s ease;
+        }
+
+        .metrics-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .metric-name {
+            background: linear-gradient(135deg, #3498db, #2980b9) !important;
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.1em;
+            text-align: center;
+            position: relative;
+        }
+
+        .metric-name::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #e74c3c;
+        }
+
+        .definition {
+            font-size: 1em;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.2em;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            margin: 5px 0;
+        }
+
+        .fraction {
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .numerator {
+            display: block;
+            border-bottom: 2px solid #333;
+            padding-bottom: 2px;
+            margin-bottom: 2px;
+        }
+
+        .denominator {
+            display: block;
+            padding-top: 2px;
+        }
+
+        .use-case {
+            font-size: 0.95em;
+            line-height: 1.5;
+            color: #495057;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .accuracy-row { background: linear-gradient(135deg, #fff3cd, #ffeaa7) !important; }
+        .precision-row { background: linear-gradient(135deg, #d1ecf1, #bee5eb) !important; }
+        .recall-row { background: linear-gradient(135deg, #f8d7da, #f5c6cb) !important; }
+        .f1-row { background: linear-gradient(135deg, #d4edda, #c3e6cb) !important; }
+        .sensitivity-row { background: linear-gradient(135deg, #e2e3e5, #d6d8db) !important; }
+        .specificity-row { background: linear-gradient(135deg, #e7f3ff, #cce7ff) !important; }
+
+        .confusion-matrix {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .confusion-matrix h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+
+        .matrix-grid {
+            display: inline-block;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        .matrix-labels {
+            display: grid;
+            grid-template-columns: 100px 100px 100px;
+            grid-template-rows: 50px 80px 80px;
+            gap: 2px;
+            font-weight: 600;
+        }
+
+        .matrix-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .header-cell {
+            background: #6c757d;
+            color: white;
+            font-weight: 700;
+        }
+
+        .tp-cell { background: #28a745; color: white; }
+        .fp-cell { background: #ffc107; color: #333; }
+        .fn-cell { background: #fd7e14; color: white; }
+        .tn-cell { background: #17a2b8; color: white; }
+
+        .key-insights {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .key-insights h3 {
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .insight {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .insight strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-table {
+                font-size: 0.85em;
+            }
+            
+            .metrics-table th, 
+            .metrics-table td {
+                padding: 12px 8px;
+            }
+            
+            .formula {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <h1>🎯 Machine Learning Evaluation Metrics</h1>
+        
+        <div class="confusion-matrix">
+            <h3>📊 Confusion Matrix Reference</h3>
+            <div class="matrix-grid">
+                <div class="matrix-labels">
+                    <div class="matrix-cell header-cell"></div>
+                    <div class="matrix-cell header-cell">Predicted<br>Positive</div>
+                    <div class="matrix-cell header-cell">Predicted<br>Negative</div>
+                    
+                    <div class="matrix-cell header-cell">Actual<br>Positive</div>
+                    <div class="matrix-cell tp-cell"><strong>TP</strong><br>True Positive</div>
+                    <div class="matrix-cell fn-cell"><strong>FN</strong><br>False Negative</div>
+                    
+                    <div class="matrix-cell header-cell">Actual<br>Negative</div>
+                    <div class="matrix-cell fp-cell"><strong>FP</strong><br>False Positive</div>
+                    <div class="matrix-cell tn-cell"><strong>TN</strong><br>True Negative</div>
+                </div>
+            </div>
+        </div>
+
+        <table class="metrics-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">📈 Metric</th>
+                    <th style="width: 35%;">📝 Definition</th>
+                    <th style="width: 25%;">🔢 Formula</th>
+                    <th style="width: 25%;">🎯 Use Case</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="accuracy-row">
+                    <td class="metric-name">Accuracy</td>
+                    <td class="definition">The proportion of correct predictions among all predictions.</td>
+                    <td>
+                        <div class="formula">
+                            <div class="fraction">
+                                <span class="numerator">TP + TN</span>
+                                <span class="denominator">TP + TN + FP + FN</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="use-case">General performance measurement when classes are balanced.</td>
+                </tr>
+                
+                <tr class="precision-row">
+                    <td class="metric-name">Precision</td>
+                    <td class="definition">The proportion of true positive predictions among all positive predictions.</td>
+                    <td>
+                        <div class="formula">
+                            <div class="fraction">
+                                <span class="numerator">TP</span>
+                                <span class="denominator">TP + FP</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="use-case">Important when false positives are costly (e.g., avoiding unnecessary surgeries, reducing patient anxiety from false alarms).</td>
+                </tr>
+                
+                <tr class="recall-row">
+                    <td class="metric-name">Recall</td>
+                    <td class="definition">The proportion of actual positives that are correctly predicted (also known as Sensitivity).</td>
+                    <td>
+                        <div class="formula">
+                            <div class="fraction">
+                                <span class="numerator">TP</span>
+                                <span class="denominator">TP + FN</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="use-case">Important when false negatives are costly (e.g., missing cancer diagnosis, failing to detect heart disease).</td>
+                </tr>
+                
+                <tr class="f1-row">
+                    <td class="metric-name">F1-Score</td>
+                    <td class="definition">The harmonic mean of Precision and Recall. Balances precision and recall.</td>
+                    <td>
+                        <div class="formula">
+                            <div class="fraction">
+                                <span class="numerator">2 × Precision × Recall</span>
+                                <span class="denominator">Precision + Recall</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="use-case">Useful for imbalanced medical datasets (e.g., rare disease detection where both missed cases and false alarms matter).</td>
+                </tr>
+                
+                <tr class="sensitivity-row">
+                    <td class="metric-name">Sensitivity</td>
+                    <td class="definition">The ability to correctly identify positive cases (same as Recall).</td>
+                    <td>
+                        <div class="formula">
+                            <div class="fraction">
+                                <span class="numerator">TP</span>
+                                <span class="denominator">TP + FN</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="use-case">Critical in healthcare for diagnosing diseases (minimize missed cases).</td>
+                </tr>
+                
+                <tr class="specificity-row">
+                    <td class="metric-name">Specificity</td>
+                    <td class="definition">The proportion of actual negatives that are correctly predicted.</td>
+                    <td>
+                        <div class="formula">
+                            <div class="fraction">
+                                <span class="numerator">TN</span>
+                                <span class="denominator">TN + FP</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="use-case">Important when identifying true negatives is crucial (e.g., confirming healthy patients, drug safety testing).</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="key-insights">
+            <h3>💡 Key Insights for Metric Selection</h3>
+            <div class="insights-grid">
+                <div class="insight">
+                    <strong>⚖️ Precision vs Recall Trade-off</strong>
+                    High precision reduces false cancer alarms and unnecessary biopsies. High recall ensures fewer missed diagnoses but may increase patient anxiety from false positives.
+                </div>
+                
+                <div class="insight">
+                    <strong>🏥 Disease Screening</strong>
+                    Prioritize Sensitivity/Recall for cancer screening to minimize missed cases. Use Specificity to reduce unnecessary follow-up procedures and patient stress.
+                </div>
+                
+                <div class="insight">
+                    <strong>💊 Drug Efficacy Testing</strong>
+                    High Precision ensures patients receiving treatment actually benefit. High Recall ensures effective treatments aren't missed in clinical trials.
+                </div>
+                
+                <div class="insight">
+                    <strong>🫀 Emergency Medicine</strong>
+                    High Sensitivity for heart attack detection to avoid missing critical cases. Balance with Specificity to prevent overloading emergency resources.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
