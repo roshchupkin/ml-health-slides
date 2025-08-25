@@ -38,7 +38,7 @@ This repository contains interactive HTML slides covering essential machine lear
 
 ## 🚀 Getting Started
 
-1. **View Online**: Visit the [GitHub Pages site](https://[your-username].github.io/[repository-name]/)
+1. **View Online**: Visit the [GitHub Pages site](https://roshchupkin.github.io/ml-health-slides/)
 2. **Local Viewing**: Simply open `index.html` in any modern web browser
 3. **Navigation**: Use the interactive index page to navigate between different modules
 
