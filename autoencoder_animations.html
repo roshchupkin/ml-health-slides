@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autoencoder Animations</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        
+        // Create simple icon components since Lucide UMD doesn't work well with React
+        const PlayIcon = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5,3 19,12 5,21"></polygon>
+            </svg>
+        );
+        
+        const PauseIcon = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+        );
+        
+        const RotateCcwIcon = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1,4 1,10 7,10"></polyline>
+                <path d="M3.51,15a9,9,0,1,0,2.13-9.36L1,10"></path>
+            </svg>
+        );
+        
+        const ChevronLeftIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15,18 9,12 15,6"></polyline>
+            </svg>
+        );
+        
+        const ChevronRightIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9,18 15,12 9,6"></polyline>
+            </svg>
+        );
+        
+        const ZapIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
+            </svg>
+        );
+
+        const AutoencoderAnimations = () => {
+          const [currentModel, setCurrentModel] = useState(0);
+          const [isPlaying, setIsPlaying] = useState(false);
+          const [step, setStep] = useState(0);
+          const [speed, setSpeed] = useState(2000);
+          const [reconstructionQuality, setReconstructionQuality] = useState(0);
+
+          const models = [
+            {
+              name: "Basic Autoencoder",
+              description: "Simple encoder-decoder architecture for dimensionality reduction",
+              steps: [
+                { 
+                  title: "Input Data", 
+                  description: "High-dimensional input (e.g., 784D image pixels)",
+                  details: "The autoencoder receives high-dimensional data as input. For example, a 28×28 grayscale image becomes a 784-dimensional vector. The goal is to learn a compressed representation while preserving important features."
+                },
+                { 
+                  title: "Encoder Forward", 
+                  description: "Compress input through hidden layers",
+                  details: "The encoder network transforms the input through multiple layers, gradually reducing dimensionality. Each layer applies weights, biases, and activation functions: h = σ(Wx + b). The network learns to extract the most important features."
+                },
+                { 
+                  title: "Bottleneck", 
+                  description: "Low-dimensional latent representation (e.g., 32D)",
+                  details: "The bottleneck layer contains the compressed latent representation z. This is the 'code' that captures the essential information. The dimensionality reduction forces the network to learn efficient representations."
+                },
+                { 
+                  title: "Decoder Forward", 
+                  description: "Reconstruct from latent representation",
+                  details: "The decoder network takes the latent code and reconstructs the original input. It applies the reverse transformation: x̂ = σ(W'z + b'). The network learns to expand the compressed representation back to the original dimensions."
+                },
+                { 
+                  title: "Reconstruction", 
+                  description: "Output matches original input dimensions",
+                  details: "The final output x̂ has the same dimensions as the original input x. The quality of reconstruction indicates how well the autoencoder learned the data distribution and important features."
+                },
+                { 
+                  title: "Loss Calculation", 
+                  description: "Compare reconstruction with original input",
+                  details: "The reconstruction loss measures how well the output matches the input. Common loss functions include Mean Squared Error (MSE): L = ||x - x̂||² or Binary Cross-Entropy for binary data."
+                },
+                { 
+                  title: "Backpropagation", 
+                  description: "Update weights to minimize reconstruction error",
+                  details: "Gradients are computed and weights are updated using optimization algorithms like Adam or SGD. The network learns to minimize the reconstruction error, improving the quality of the latent representation."
+                }
+              ],
+              color: "bg-blue-500",
+              accent: "text-blue-500",
+              applications: "Dimensionality reduction, feature learning, data compression, anomaly detection, image denoising"
+            },
+            {
+              name: "Variational Autoencoder (VAE)",
+              description: "Probabilistic autoencoder that learns latent distributions",
+              steps: [
+                { 
+                  title: "Input Processing", 
+                  description: "Input data fed to encoder network",
+                  details: "The input x is processed through the encoder network, which learns to map inputs to parameters of a probability distribution rather than a fixed latent code."
+                },
+                { 
+                  title: "Mean & Variance", 
+                  description: "Encoder outputs μ and σ² parameters",
+                  details: "The encoder outputs two vectors: μ (mean) and log(σ²) (log variance). These define a Gaussian distribution q(z|x) = N(z; μ, σ²I) in the latent space."
+                },
+                { 
+                  title: "Reparameterization", 
+                  description: "z = μ + σ × ε (ε ~ N(0,1))",
+                  details: "The reparameterization trick allows sampling from q(z|x) while maintaining differentiability. We sample ε from N(0,1) and compute z = μ + σ × ε. This enables gradient-based optimization."
+                },
+                { 
+                  title: "Sampling", 
+                  description: "Sample from learned latent distribution",
+                  details: "Multiple samples can be drawn from the learned distribution q(z|x). This stochasticity enables the VAE to generate diverse outputs and learn a smooth latent space."
+                },
+                { 
+                  title: "Decoder Generation", 
+                  description: "Generate output from sampled latent code",
+                  details: "The decoder network p(x|z) takes the sampled latent code z and generates the reconstructed output. It learns the conditional distribution of the data given the latent representation."
+                },
+                { 
+                  title: "KL Divergence", 
+                  description: "Regularize latent space to match prior N(0,1)",
+                  details: "The KL divergence D_KL(q(z|x) || p(z)) measures how much the learned distribution differs from the prior p(z) = N(0,I). This regularization encourages a well-structured latent space."
+                },
+                { 
+                  title: "Combined Loss", 
+                  description: "Reconstruction + KL divergence loss",
+                  details: "The total loss is L = E[log p(x|z)] - D_KL(q(z|x) || p(z)). The first term is reconstruction loss, the second is regularization. This balances reconstruction quality with latent space structure."
+                }
+              ],
+              color: "bg-purple-500",
+              accent: "text-purple-500",
+              applications: "Generative modeling, image generation, data synthesis, representation learning, disentanglement"
+            },
+            {
+              name: "Denoising Autoencoder",
+              description: "Learns to reconstruct clean data from corrupted inputs",
+              steps: [
+                { 
+                  title: "Clean Input", 
+                  description: "Original uncorrupted data",
+                  details: "We start with clean, uncorrupted data x. This serves as the target for reconstruction. The network will learn to recover this clean version from noisy inputs."
+                },
+                { 
+                  title: "Add Noise", 
+                  description: "Artificially corrupt input with noise",
+                  details: "We artificially add noise to create corrupted input x̃. Common noise types include Gaussian noise, salt-and-pepper noise, or masking (setting some values to zero). The corruption rate is typically 10-50%."
+                },
+                { 
+                  title: "Encoder Process", 
+                  description: "Encode noisy input to latent space",
+                  details: "The encoder processes the corrupted input x̃ and learns to extract robust features that are invariant to the type of corruption. It must learn to ignore noise and focus on underlying patterns."
+                },
+                { 
+                  title: "Latent Features", 
+                  description: "Compressed noise-robust representation",
+                  details: "The latent representation z captures the essential features that are robust to corruption. The network learns to extract features that are common across different noise realizations of the same input."
+                },
+                { 
+                  title: "Decoder Process", 
+                  description: "Reconstruct from latent features",
+                  details: "The decoder takes the noise-robust latent representation and reconstructs the output. It learns to generate clean data from the compressed, robust features."
+                },
+                { 
+                  title: "Clean Output", 
+                  description: "Network learns to remove noise",
+                  details: "The final output should be close to the original clean input x, not the corrupted input x̃. The network learns to denoise by understanding the underlying data distribution."
+                },
+                { 
+                  title: "Training", 
+                  description: "Minimize error between output and clean target",
+                  details: "The loss function compares the output with the original clean data: L = ||x - x̂||². The network learns to reconstruct clean data from corrupted inputs, making it robust to noise."
+                }
+              ],
+              color: "bg-green-500",
+              accent: "text-green-500",
+              applications: "Image denoising, robust feature learning, data cleaning, noise removal, robust representations"
+            },
+            {
+              name: "Convolutional Autoencoder",
+              description: "Uses convolutions for spatial data like images",
+              steps: [
+                { 
+                  title: "Input Image", 
+                  description: "2D spatial input (H × W × C)",
+                  details: "The input is a 2D image with height H, width W, and C channels (e.g., RGB images have C=3). The spatial structure is preserved throughout the network using convolutional operations."
+                },
+                { 
+                  title: "Conv Encoder", 
+                  description: "Convolutional layers with pooling",
+                  details: "The encoder uses convolutional layers to extract spatial features, followed by pooling layers to reduce spatial dimensions. Each conv layer learns filters that detect patterns like edges, textures, and shapes."
+                },
+                { 
+                  title: "Feature Maps", 
+                  description: "Hierarchical spatial features",
+                  details: "Feature maps capture hierarchical representations: early layers detect simple features (edges, corners), while deeper layers combine these into complex patterns (shapes, objects). The spatial structure is maintained."
+                },
+                { 
+                  title: "Bottleneck", 
+                  description: "Compressed spatial representation",
+                  details: "The bottleneck contains the compressed spatial representation. This could be a flattened vector or a small feature map. The network learns to encode spatial information efficiently."
+                },
+                { 
+                  title: "Deconv Decoder", 
+                  description: "Transpose convolutions (upsampling)",
+                  details: "The decoder uses transpose convolutions (deconvolutions) to gradually increase spatial dimensions. These operations learn to upsample and reconstruct spatial features from the compressed representation."
+                },
+                { 
+                  title: "Spatial Reconstruction", 
+                  description: "Reconstruct original spatial dimensions",
+                  details: "The output has the same spatial dimensions as the input image. The network learns to reconstruct the spatial structure, preserving the arrangement of features and patterns."
+                },
+                { 
+                  title: "Pixel Loss", 
+                  description: "Minimize pixel-wise reconstruction error",
+                  details: "The loss function compares pixel values between input and output images. Common choices include MSE loss or perceptual loss using pre-trained networks to capture semantic similarity."
+                }
+              ],
+              color: "bg-orange-500",
+              accent: "text-orange-500",
+              applications: "Image compression, image generation, medical imaging, satellite imagery, video processing"
+            },
+            {
+              name: "Sparse Autoencoder",
+              description: "Enforces sparsity in hidden layer activations",
+              steps: [
+                { 
+                  title: "Input Layer", 
+                  description: "Standard input processing",
+                  details: "The input is processed through the initial layers as in a standard autoencoder. The network architecture is typically overcomplete, meaning the hidden layer has more neurons than the input."
+                },
+                { 
+                  title: "Hidden Encoding", 
+                  description: "Overcomplete hidden layer (more neurons)",
+                  details: "The hidden layer has more neurons than the input dimension (overcomplete representation). This allows the network to learn multiple specialized features, but requires regularization to prevent overfitting."
+                },
+                { 
+                  title: "Sparsity Constraint", 
+                  description: "Most neurons should be inactive (near 0)",
+                  details: "A sparsity constraint encourages most hidden neurons to be inactive (close to zero) for any given input. Only a small subset of neurons should be active, creating a sparse representation."
+                },
+                { 
+                  title: "Active Neurons", 
+                  description: "Only few neurons fire for each input",
+                  details: "For each input, only a small percentage of hidden neurons are significantly active. This creates a sparse, efficient representation where each neuron specializes in detecting specific features."
+                },
+                { 
+                  title: "Reconstruction", 
+                  description: "Decode from sparse representation",
+                  details: "The decoder reconstructs the input from the sparse hidden representation. The sparse coding forces the network to learn meaningful, non-redundant features that are sufficient for reconstruction."
+                },
+                { 
+                  title: "Sparsity Loss", 
+                  description: "Penalize too many active neurons",
+                  details: "The sparsity penalty encourages the average activation of each neuron across the dataset to be close to a target value ρ (typically 0.05-0.1). This prevents too many neurons from being active simultaneously."
+                },
+                { 
+                  title: "Combined Training", 
+                  description: "Reconstruction + sparsity penalty",
+                  details: "The total loss is L = ||x - x̂||² + β∑KL(ρ||ρ̂), where KL(ρ||ρ̂) is the KL divergence between target sparsity ρ and actual average activation ρ̂. β controls the sparsity penalty strength."
+                }
+              ],
+              color: "bg-red-500",
+              accent: "text-red-500",
+              applications: "Feature learning, dictionary learning, neuroscience modeling, efficient representations, interpretable features"
+            },
+            {
+              name: "β-VAE (Beta-VAE)",
+              description: "VAE with adjustable regularization strength",
+              steps: [
+                { 
+                  title: "Standard VAE", 
+                  description: "Basic variational autoencoder setup",
+                  details: "β-VAE starts with the standard VAE architecture: an encoder that outputs μ and σ², reparameterization sampling, and a decoder that generates outputs. The key difference is in the loss function."
+                },
+                { 
+                  title: "Beta Parameter", 
+                  description: "β controls KL divergence weighting",
+                  details: "The β parameter controls the weight of the KL divergence term in the loss function: L = E[log p(x|z)] - β×D_KL(q(z|x) || p(z)). Higher β values increase regularization strength."
+                },
+                { 
+                  title: "High Beta", 
+                  description: "β &gt; 1: Strong disentanglement, poor reconstruction",
+                  details: "When β &gt; 1, the KL divergence term is heavily weighted. This strongly regularizes the latent space, encouraging disentangled representations where each dimension captures a single factor of variation."
+                },
+                { 
+                  title: "Low Beta", 
+                  description: "β &lt; 1: Better reconstruction, less disentangled",
+                  details: "When β &lt; 1, the reconstruction term dominates. This allows better reconstruction quality but may result in entangled representations where multiple factors are mixed in each dimension."
+                },
+                { 
+                  title: "Latent Structure", 
+                  description: "Different β values create different latent structures",
+                  details: "The choice of β creates a trade-off between reconstruction quality and disentanglement. Different β values lead to different latent space structures and factorizations of the data."
+                },
+                { 
+                  title: "Disentanglement", 
+                  description: "Higher β encourages independent latent factors",
+                  details: "Higher β values encourage the latent dimensions to be independent and capture single factors of variation (e.g., one dimension for color, another for shape). This makes the representations more interpretable."
+                },
+                { 
+                  title: "Trade-off", 
+                  description: "Balance between reconstruction and disentanglement",
+                  details: "The β parameter controls the fundamental trade-off: reconstruction quality vs. disentanglement. Optimal β values depend on the specific application and desired properties of the latent representation."
+                }
+              ],
+              color: "bg-indigo-500",
+              accent: "text-indigo-500",
+              applications: "Disentangled representation learning, interpretable AI, controllable generation, factor analysis, causal discovery"
+            }
+          ];
+
+          const currentModelData = models[currentModel];
+
+          useEffect(() => {
+            let interval;
+            if (isPlaying) {
+              interval = setInterval(() => {
+                setStep(prev => {
+                  if (prev >= currentModelData.steps.length - 1) {
+                    setIsPlaying(false);
+                    return prev;
+                  }
+                  return prev + 1;
+                });
+                
+                setReconstructionQuality(prev => {
+                  if (step >= 3) {
+                    return Math.min(100, prev + 15);
+                  }
+                  return prev;
+                });
+              }, speed);
+            }
+            return () => clearInterval(interval);
+          }, [isPlaying, speed, currentModelData.steps.length, step]);
+
+          const handlePlay = () => {
+            if (step >= currentModelData.steps.length - 1) {
+              setStep(0);
+              setReconstructionQuality(0);
+            }
+            setIsPlaying(!isPlaying);
+          };
+
+          const handleReset = () => {
+            setIsPlaying(false);
+            setStep(0);
+            setReconstructionQuality(0);
+          };
+
+          const nextModel = () => {
+            setCurrentModel((prev) => (prev + 1) % models.length);
+            handleReset();
+          };
+
+          const prevModel = () => {
+            setCurrentModel((prev) => (prev - 1 + models.length) % models.length);
+            handleReset();
+          };
+
+          const renderVisualization = () => {
+            const progress = (step + 1) / currentModelData.steps.length;
+            
+            return (
+              <div className="relative w-full h-80 bg-gradient-to-br from-gray-50 to-gray-200 rounded-xl p-6 overflow-hidden">
+                <div className="absolute inset-0 opacity-5">
+                  <div className="grid grid-cols-12 grid-rows-8 h-full">
+                    {Array.from({ length: 96 }).map((_, i) => (
+                      <div key={i} className="border border-gray-400"></div>
+                    ))}
+                  </div>
+                </div>
+
+                {currentModel === 0 && (
+                  <div className="relative h-full flex items-center justify-center">
+                    <div className="flex flex-col space-y-1">
+                      <div className="text-xs text-gray-600 mb-1">Input</div>
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div
+                          key={`input-${i}`}
+                          className={`w-4 h-4 rounded transition-all duration-1000 ${
+                            step >= 0 ? 'bg-blue-400 animate-pulse' : 'bg-gray-300'
+                          }`}
+                          style={{ transitionDelay: `${i * 50}ms` }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="mx-8 flex flex-col items-center">
+                      <div className="flex flex-col space-y-1">
+                        <div className="text-xs text-gray-600 mb-1">Hidden</div>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div
+                            key={`hidden1-${i}`}
+                            className={`w-4 h-4 rounded transition-all duration-1000 ${
+                              step >= 1 ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'
+                            }`}
+                            style={{ transitionDelay: `${i * 100}ms` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mx-4 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-1">Latent</div>
+                      {Array.from({ length: 2 }).map((_, i) => (
+                        <div
+                          key={`latent-${i}`}
+                          className={`w-6 h-6 rounded-full transition-all duration-1000 ${
+                            step >= 2 ? 'bg-yellow-400 shadow-lg animate-bounce' : 'bg-gray-300'
+                          }`}
+                          style={{ transitionDelay: `${i * 200}ms` }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="mx-8 flex flex-col items-center">
+                      <div className="flex flex-col space-y-1">
+                        <div className="text-xs text-gray-600 mb-1">Hidden</div>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div
+                            key={`hidden2-${i}`}
+                            className={`w-4 h-4 rounded transition-all duration-1000 ${
+                              step >= 3 ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'
+                            }`}
+                            style={{ transitionDelay: `${i * 100}ms` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col space-y-1">
+                      <div className="text-xs text-gray-600 mb-1">Output</div>
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div
+                          key={`output-${i}`}
+                          className={`w-4 h-4 rounded transition-all duration-1000 ${
+                            step >= 4 ? 'bg-green-400' : 'bg-gray-300'
+                          }`}
+                          style={{ 
+                            transitionDelay: `${i * 50}ms`,
+                            opacity: step >= 4 ? reconstructionQuality / 100 : 0.3
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {step >= 1 && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="flex items-center space-x-16 text-2xl text-blue-400 animate-pulse">
+                          <span>→</span>
+                          <span>→</span>
+                          <span>→</span>
+                          <span>→</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {currentModel === 1 && (
+                  <div className="relative h-full flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Input</div>
+                      <div className={`w-16 h-16 rounded-lg transition-all duration-1000 ${
+                        step >= 0 ? 'bg-purple-300 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                    </div>
+
+                    <div className="mx-6 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Encoder</div>
+                      <div className={`w-12 h-20 rounded transition-all duration-1000 ${
+                        step >= 1 ? 'bg-purple-400 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                    </div>
+
+                    <div className="mx-4 flex flex-col items-center space-y-2">
+                      <div className="text-xs text-gray-600">μ, σ²</div>
+                      <div className={`w-8 h-8 rounded-full transition-all duration-1000 ${
+                        step >= 1 ? 'bg-blue-400' : 'bg-gray-300'
+                      }`}>
+                        <div className="text-xs text-white text-center leading-8">μ</div>
+                      </div>
+                      <div className={`w-8 h-8 rounded-full transition-all duration-1000 ${
+                        step >= 1 ? 'bg-red-400' : 'bg-gray-300'
+                      }`}>
+                        <div className="text-xs text-white text-center leading-8">σ²</div>
+                      </div>
+                    </div>
+
+                    <div className="mx-4 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Sample z</div>
+                      <div className={`w-10 h-10 rounded-full transition-all duration-1000 ${
+                        step >= 2 ? 'bg-yellow-400 animate-bounce' : 'bg-gray-300'
+                      }`} />
+                      {step >= 2 && (
+                        <div className="text-xs text-gray-500 mt-1">z ~ N(μ,σ²)</div>
+                      )}
+                    </div>
+
+                    <div className="mx-6 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Decoder</div>
+                      <div className={`w-12 h-20 rounded transition-all duration-1000 ${
+                        step >= 4 ? 'bg-purple-400 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Output</div>
+                      <div className={`w-16 h-16 rounded-lg transition-all duration-1000 ${
+                        step >= 4 ? 'bg-green-400' : 'bg-green-300'
+                      }`} />
+                    </div>
+
+                    {step >= 5 && (
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-red-100 border-2 border-red-400 rounded-lg p-2 animate-pulse">
+                          <div className="text-xs text-red-600 font-semibold">KL Loss</div>
+                          <div className="text-xs text-red-500">D_KL(q(z|x) || p(z))</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {step >= 5 && (
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-blue-100 border-2 border-blue-400 rounded-lg p-2">
+                          <div className="text-xs text-blue-600 font-semibold">Prior: N(0,I)</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {currentModel === 2 && (
+                  <div className="relative h-full flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Clean</div>
+                      <div className="grid grid-cols-4 grid-rows-4 gap-1">
+                        {Array.from({ length: 16 }).map((_, i) => (
+                          <div
+                            key={`clean-${i}`}
+                            className={`w-3 h-3 rounded transition-all duration-1000 ${
+                              step >= 0 ? 'bg-green-400' : 'bg-gray-300'
+                            }`}
+                            style={{ transitionDelay: `${i * 30}ms` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mx-4 flex items-center">
+                      <div className="text-2xl animate-pulse">+</div>
+                      <ZapIcon />
+                    </div>
+
+                    <div className="flex flex-col items-center mr-6">
+                      <div className="text-xs text-gray-600 mb-2">Noisy</div>
+                      <div className="grid grid-cols-4 grid-rows-4 gap-1">
+                        {Array.from({ length: 16 }).map((_, i) => {
+                          const isCorrupted = i % 3 === 0;
+                          return (
+                            <div
+                              key={`noisy-${i}`}
+                              className={`w-3 h-3 rounded transition-all duration-1000 ${
+                                step >= 1 ? (isCorrupted ? 'bg-red-400' : 'bg-green-400') : 'bg-gray-300'
+                              }`}
+                              style={{ transitionDelay: `${i * 30}ms` }}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="mx-8 flex items-center space-x-4">
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-1">Encoder</div>
+                        <div className={`w-8 h-16 rounded transition-all duration-1000 ${
+                          step >= 2 ? 'bg-blue-400 animate-pulse' : 'bg-gray-300'
+                        }`} />
+                      </div>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-1">Latent</div>
+                        <div className={`w-6 h-6 rounded-full transition-all duration-1000 ${
+                          step >= 3 ? 'bg-yellow-400 animate-bounce' : 'bg-gray-300'
+                        }`} />
+                      </div>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-1">Decoder</div>
+                        <div className={`w-8 h-16 rounded transition-all duration-1000 ${
+                          step >= 4 ? 'bg-blue-400 animate-pulse' : 'bg-gray-300'
+                        }`} />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Reconstructed</div>
+                      <div className="grid grid-cols-4 grid-rows-4 gap-1">
+                        {Array.from({ length: 16 }).map((_, i) => (
+                          <div
+                            key={`output-${i}`}
+                            className={`w-3 h-3 rounded transition-all duration-1000 ${
+                              step >= 5 ? 'bg-green-400' : 'bg-gray-300'
+                            }`}
+                            style={{ 
+                              transitionDelay: `${i * 30}ms`,
+                              opacity: step >= 5 ? reconstructionQuality / 100 : 0.3
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentModel === 3 && (
+                  <div className="relative h-full flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Input Image</div>
+                      <div className="relative">
+                        <div className={`w-20 h-20 rounded transition-all duration-1000 ${
+                          step >= 0 ? 'bg-orange-300' : 'bg-gray-300'
+                        }`} />
+                        <div className="absolute inset-0 grid grid-cols-5 grid-rows-5 gap-0.5 p-1">
+                          {Array.from({ length: 25 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`rounded-sm transition-all duration-1000 ${
+                                step >= 0 ? 'bg-orange-500' : 'bg-gray-400'
+                              }`}
+                              style={{ transitionDelay: `${i * 20}ms` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">28×28×3</div>
+                    </div>
+
+                    <div className="mx-4 flex flex-col items-center space-y-2">
+                      <div className="text-xs text-gray-600">Conv + Pool</div>
+                      <div className={`w-16 h-16 rounded transition-all duration-1000 ${
+                        step >= 1 ? 'bg-orange-400 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                      <div className="text-xs text-gray-500">14×14×32</div>
+                      
+                      <div className={`w-12 h-12 rounded transition-all duration-1000 ${
+                        step >= 1 ? 'bg-orange-500 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                      <div className="text-xs text-gray-500">7×7×64</div>
+                    </div>
+
+                    <div className="mx-4 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Bottleneck</div>
+                      <div className={`w-8 h-8 rounded-full transition-all duration-1000 ${
+                        step >= 2 ? 'bg-yellow-400 animate-bounce' : 'bg-gray-300'
+                      }`} />
+                      <div className="text-xs text-gray-500 mt-1">128D</div>
+                    </div>
+
+                    <div className="mx-4 flex flex-col items-center space-y-2">
+                      <div className="text-xs text-gray-600">Deconv + Upsample</div>
+                      <div className={`w-12 h-12 rounded transition-all duration-1000 ${
+                        step >= 3 ? 'bg-orange-500 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                      <div className="text-xs text-gray-500">7×7×64</div>
+                      
+                      <div className={`w-16 h-16 rounded transition-all duration-1000 ${
+                        step >= 4 ? 'bg-orange-400 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                      <div className="text-xs text-gray-500">14×14×32</div>
+                    </div>
+
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Reconstructed</div>
+                      <div className="relative">
+                        <div className={`w-20 h-20 rounded transition-all duration-1000 ${
+                          step >= 5 ? 'bg-green-300' : 'bg-gray-300'
+                        }`} />
+                        <div className="absolute inset-0 grid grid-cols-5 grid-rows-5 gap-0.5 p-1">
+                          {Array.from({ length: 25 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`rounded-sm transition-all duration-1000 ${
+                                step >= 5 ? 'bg-green-500' : 'bg-gray-400'
+                              }`}
+                              style={{ 
+                                transitionDelay: `${i * 20}ms`,
+                                opacity: step >= 5 ? reconstructionQuality / 100 : 0.3
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">28×28×3</div>
+                    </div>
+                  </div>
+                )}
+
+                {currentModel === 4 && (
+                  <div className="relative h-full flex items-center justify-center">
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Input</div>
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                          key={`input-${i}`}
+                          className={`w-4 h-4 rounded mb-1 transition-all duration-1000 ${
+                            step >= 0 ? 'bg-red-400 animate-pulse' : 'bg-gray-300'
+                          }`}
+                          style={{ transitionDelay: `${i * 50}ms` }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="mx-6 flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Hidden (Sparse)</div>
+                      {Array.from({ length: 10 }).map((_, i) => {
+                        const isActive = i < 3;
+                        return (
+                          <div
+                            key={`hidden-${i}`}
+                            className={`w-3 h-3 rounded mb-1 transition-all duration-1000 ${
+                              step >= 1 ? (isActive ? 'bg-red-500 animate-pulse' : 'bg-gray-200') : 'bg-gray-300'
+                            }`}
+                            style={{ transitionDelay: `${i * 30}ms` }}
+                          />
+                        );
+                      })}
+                      {step >= 2 && (
+                        <div className="text-xs text-red-600 mt-1">70% inactive</div>
+                      )}
+                    </div>
+
+                    {step >= 2 && (
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-red-100 border-2 border-red-400 rounded-lg p-2 animate-pulse">
+                          <div className="text-xs text-red-600 font-semibold">Sparsity Penalty</div>
+                          <div className="text-xs text-red-500">Σ KL(ρ || ρ̂)</div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col items-center">
+                      <div className="text-xs text-gray-600 mb-2">Output</div>
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                          key={`output-${i}`}
+                          className={`w-4 h-4 rounded mb-1 transition-all duration-1000 ${
+                            step >= 4 ? 'bg-green-400' : 'bg-gray-300'
+                          }`}
+                          style={{ 
+                            transitionDelay: `${i * 50}ms`,
+                            opacity: step >= 4 ? reconstructionQuality / 100 : 0.3
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {currentModel === 5 && (
+                  <div className="relative h-full flex items-center justify-center">
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-indigo-100 border-2 border-indigo-400 rounded-lg p-3">
+                        <div className="text-xs text-indigo-600 font-semibold mb-2">β Parameter</div>
+                        <div className="flex items-center space-x-2">
+                          <div className="text-xs">0.1</div>
+                          <div className="w-20 h-2 bg-gray-300 rounded">
+                            <div 
+                              className="h-2 bg-indigo-500 rounded transition-all duration-1000"
+                              style={{ width: `${20 + step * 15}%` }}
+                            />
+                          </div>
+                          <div className="text-xs">10</div>
+                        </div>
+                        <div className="text-xs text-indigo-500 mt-1">
+                          Current: {(0.1 + step * 0.5).toFixed(1)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-8">
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-2">Input</div>
+                        <div className={`w-16 h-16 rounded-lg transition-all duration-1000 ${
+                          step >= 0 ? 'bg-indigo-300 animate-pulse' : 'bg-gray-300'
+                        }`} />
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-2">Latent Space</div>
+                        <div className="grid grid-cols-2 grid-rows-2 gap-2">
+                          {Array.from({ length: 4 }).map((_, i) => (
+                            <div
+                              key={`latent-${i}`}
+                              className={`w-6 h-6 rounded-full transition-all duration-1000 ${
+                                step >= 2 ? 'bg-yellow-400' : 'bg-gray-300'
+                              }`}
+                              style={{
+                                transform: step >= 4 ? `scale(${1.2 - i * 0.1})` : 'scale(1)',
+                                opacity: step >= 4 ? (i < 2 ? 1 : 0.5) : 1
+                              }}
+                            />
+                          ))}
+                        </div>
+                        {step >= 4 && (
+                          <div className="text-xs text-yellow-600 mt-1">Disentangled</div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        <div className="text-xs text-gray-600 mb-2">Output</div>
+                        <div className={`w-16 h-16 rounded-lg transition-all duration-1000 ${
+                          step >= 5 ? 'bg-green-400' : 'bg-gray-300'
+                        }`} />
+                      </div>
+                    </div>
+
+                    {step >= 6 && (
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-indigo-100 border-2 border-indigo-400 rounded-lg p-2">
+                          <div className="text-xs text-indigo-600 font-semibold">Trade-off</div>
+                          <div className="text-xs text-indigo-500">Reconstruction vs Disentanglement</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          return (
+            <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">Autoencoder Animations</h1>
+                <p className="text-gray-600">Interactive visualizations of different autoencoder architectures</p>
+              </div>
+
+              {/* Model Selector */}
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  onClick={prevModel}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronLeftIcon />
+                </button>
+                
+                <div className="text-center">
+                  <h2 className={`text-xl font-semibold ${currentModelData.accent}`}>
+                    {currentModelData.name}
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">{currentModelData.description}</p>
+                </div>
+                
+                <button
+                  onClick={nextModel}
+                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronRightIcon />
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Step {step + 1} of {currentModelData.steps.length}</span>
+                  <span>{Math.round(((step + 1) / currentModelData.steps.length) * 100)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-500 ${currentModelData.color}`}
+                    style={{ width: `${((step + 1) / currentModelData.steps.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Visualization */}
+              {renderVisualization()}
+
+              {/* Controls */}
+              <div className="flex items-center justify-center space-x-4 mt-6">
+                <button
+                  onClick={handlePlay}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isPlaying 
+                      ? 'bg-red-500 hover:bg-red-600 text-white' 
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                  }`}
+                >
+                  {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                  <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                </button>
+
+                <button
+                  onClick={handleReset}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                >
+                  <RotateCcwIcon />
+                  <span>Reset</span>
+                </button>
+
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm text-gray-600">Speed:</label>
+                  <select
+                    value={speed}
+                    onChange={(e) => setSpeed(Number(e.target.value))}
+                    className="px-2 py-1 border border-gray-300 rounded text-sm"
+                  >
+                    <option value={1000}>Fast</option>
+                    <option value={2000}>Normal</option>
+                    <option value={4000}>Slow</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Step Information */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-2">
+                  {currentModelData.steps[step]?.title}
+                </h3>
+                <p className="text-gray-600 text-sm mb-3">
+                  {currentModelData.steps[step]?.description}
+                </p>
+                {currentModelData.steps[step]?.details && (
+                  <div className="bg-white p-3 rounded border-l-4 border-blue-400">
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {currentModelData.steps[step]?.details}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Applications */}
+              {currentModelData.applications && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">Applications</h4>
+                  <p className="text-blue-700 text-sm">
+                    {currentModelData.applications}
+                  </p>
+                </div>
+              )}
+
+              {/* Mathematical Details */}
+              <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                <h4 className="font-semibold text-purple-800 mb-2">Mathematical Details</h4>
+                <div className="space-y-3">
+                  {currentModel === 0 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Encoder Function</h5>
+                        <p className="text-sm text-gray-700">h = σ(W₁x + b₁)</p>
+                        <p className="text-xs text-gray-600 mt-1">where σ is activation function, W₁ are weights, b₁ are biases</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Decoder Function</h5>
+                        <p className="text-sm text-gray-700">x̂ = σ(W₂h + b₂)</p>
+                        <p className="text-xs text-gray-600 mt-1">reconstructs input from latent representation</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Loss Function</h5>
+                        <p className="text-sm text-gray-700">L = ||x - x̂||² = Σ(xᵢ - x̂ᵢ)²</p>
+                        <p className="text-xs text-gray-600 mt-1">Mean Squared Error between input and reconstruction</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 1 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Encoder Output</h5>
+                        <p className="text-sm text-gray-700">μ = W₁x + b₁, log(σ²) = W₂x + b₂</p>
+                        <p className="text-xs text-gray-600 mt-1">maps input to distribution parameters</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Reparameterization Trick</h5>
+                        <p className="text-sm text-gray-700">z = μ + σ × ε, where ε ~ N(0,1)</p>
+                        <p className="text-xs text-gray-600 mt-1">enables gradient flow through sampling</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">KL Divergence</h5>
+                        <p className="text-sm text-gray-700">D_KL(q(z|x) || p(z)) = -½Σ(1 + log(σ²) - μ² - σ²)</p>
+                        <p className="text-xs text-gray-600 mt-1">regularizes latent space to match prior N(0,I)</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Total Loss</h5>
+                        <p className="text-sm text-gray-700">L = E[log p(x|z)] - D_KL(q(z|x) || p(z))</p>
+                        <p className="text-xs text-gray-600 mt-1">reconstruction loss + regularization</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 2 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Noise Addition</h5>
+                        <p className="text-sm text-gray-700">x̃ = x + ε, where ε ~ N(0, σ²ₙ)</p>
+                        <p className="text-xs text-gray-600 mt-1">adds Gaussian noise to input</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Encoder</h5>
+                        <p className="text-sm text-gray-700">h = σ(W₁x̃ + b₁)</p>
+                        <p className="text-xs text-gray-600 mt-1">processes corrupted input</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Decoder</h5>
+                        <p className="text-sm text-gray-700">x̂ = σ(W₂h + b₂)</p>
+                        <p className="text-xs text-gray-600 mt-1">reconstructs clean output</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Loss</h5>
+                        <p className="text-sm text-gray-700">L = ||x - x̂||²</p>
+                        <p className="text-xs text-gray-600 mt-1">compares with original clean data</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 3 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Convolution Operation</h5>
+                        <p className="text-sm text-gray-700">(f * k)(i,j) = ΣₘΣₙ f(i-m,j-n) k(m,n)</p>
+                        <p className="text-xs text-gray-600 mt-1">applies learned filters to input</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Pooling</h5>
+                        <p className="text-sm text-gray-700">y(i,j) = max(f(2i,2j), f(2i+1,2j), f(2i,2j+1), f(2i+1,2j+1))</p>
+                        <p className="text-xs text-gray-600 mt-1">reduces spatial dimensions</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Transpose Convolution</h5>
+                        <p className="text-sm text-gray-700">y(i,j) = ΣₘΣₙ f(m,n) k(i-m,j-n)</p>
+                        <p className="text-xs text-gray-600 mt-1">upsamples feature maps</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Pixel Loss</h5>
+                        <p className="text-sm text-gray-700">L = Σᵢⱼ(xᵢⱼ - x̂ᵢⱼ)²</p>
+                        <p className="text-xs text-gray-600 mt-1">MSE across all pixels</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 4 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Hidden Layer</h5>
+                        <p className="text-sm text-gray-700">h = σ(Wx + b), where dim(h) > dim(x)</p>
+                        <p className="text-xs text-gray-600 mt-1">overcomplete representation</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Sparsity Constraint</h5>
+                        <p className="text-sm text-gray-700">ρ̂ⱼ = (1/N) Σᵢ hⱼ⁽ⁱ⁾ ≈ ρ</p>
+                        <p className="text-xs text-gray-600 mt-1">average activation should be close to target ρ</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">KL Divergence for Sparsity</h5>
+                        <p className="text-sm text-gray-700">KL(ρ || ρ̂ⱼ) = ρ log(ρ/ρ̂ⱼ) + (1-ρ) log((1-ρ)/(1-ρ̂ⱼ))</p>
+                        <p className="text-xs text-gray-600 mt-1">penalizes deviation from target sparsity</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Total Loss</h5>
+                        <p className="text-sm text-gray-700">L = ||x - x̂||² + β Σⱼ KL(ρ || ρ̂ⱼ)</p>
+                        <p className="text-xs text-gray-600 mt-1">reconstruction + sparsity penalty</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 5 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">β-VAE Loss</h5>
+                        <p className="text-sm text-gray-700">L = E[log p(x|z)] - β D_KL(q(z|x) || p(z))</p>
+                        <p className="text-xs text-gray-600 mt-1">β controls regularization strength</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Disentanglement Metric</h5>
+                        <p className="text-sm text-gray-700">D = (1/K) Σᵏ (1 - H(zᵏ|vᵏ)/H(zᵏ))</p>
+                        <p className="text-xs text-gray-600 mt-1">measures factor independence</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">β Schedule</h5>
+                        <p className="text-sm text-gray-700">β(t) = β₀ + (β₁ - β₀) × min(t/T, 1)</p>
+                        <p className="text-xs text-gray-600 mt-1">gradually increase β during training</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-purple-400">
+                        <h5 className="font-medium text-purple-700 mb-1">Optimal β Values</h5>
+                        <p className="text-sm text-gray-700">β &isin; [1, 10] for disentanglement</p>
+                        <p className="text-xs text-gray-600 mt-1">higher values = stronger disentanglement</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Training Guidelines */}
+              <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                <h4 className="font-semibold text-green-800 mb-2">Training Guidelines</h4>
+                <div className="space-y-3">
+                  {currentModel === 0 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Architecture</h5>
+                        <p className="text-sm text-gray-700">• Input: 784D → Hidden: 256D → Latent: 32D → Hidden: 256D → Output: 784D</p>
+                        <p className="text-sm text-gray-700">• Use ReLU activation for hidden layers, Sigmoid for output</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Training</h5>
+                        <p className="text-sm text-gray-700">• Learning rate: 0.001, Batch size: 128</p>
+                        <p className="text-sm text-gray-700">• Optimizer: Adam, Loss: MSE</p>
+                        <p className="text-sm text-gray-700">• Train for 50-100 epochs</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Evaluation</h5>
+                        <p className="text-sm text-gray-700">• Monitor reconstruction loss on validation set</p>
+                        <p className="text-sm text-gray-700">• Visualize reconstructed samples</p>
+                        <p className="text-sm text-gray-700">• Check for overfitting (validation loss increases)</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 1 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Architecture</h5>
+                        <p className="text-sm text-gray-700">• Encoder: Input → Hidden → μ, log(σ²)</p>
+                        <p className="text-sm text-gray-700">• Decoder: z → Hidden → Output</p>
+                        <p className="text-sm text-gray-700">• Use ReLU activation, output activation depends on data</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Training</h5>
+                        <p className="text-sm text-gray-700">• Learning rate: 0.0001, Batch size: 64</p>
+                        <p className="text-sm text-gray-700">• Optimizer: Adam, Loss: Reconstruction + KL</p>
+                        <p className="text-sm text-gray-700">• Train for 100-200 epochs</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">KL Annealing</h5>
+                        <p className="text-sm text-gray-700">• Start with β = 0, gradually increase to 1</p>
+                        <p className="text-sm text-gray-700">• Helps prevent posterior collapse</p>
+                        <p className="text-sm text-gray-700">• Monitor KL divergence during training</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 2 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Noise Configuration</h5>
+                        <p className="text-sm text-gray-700">• Gaussian noise: σ = 0.1-0.3</p>
+                        <p className="text-sm text-gray-700">• Salt-and-pepper: 10-30% corruption</p>
+                        <p className="text-sm text-gray-700">• Masking: 20-50% of pixels set to 0</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Training</h5>
+                        <p className="text-sm text-gray-700">• Learning rate: 0.001, Batch size: 128</p>
+                        <p className="text-sm text-gray-700">• Optimizer: Adam, Loss: MSE</p>
+                        <p className="text-sm text-gray-700">• Train for 50-100 epochs</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Validation</h5>
+                        <p className="text-sm text-gray-700">• Test on different noise types</p>
+                        <p className="text-sm text-gray-700">• Compare with original clean data</p>
+                        <p className="text-sm text-gray-700">• Measure PSNR or SSIM for image quality</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 3 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Architecture</h5>
+                        <p className="text-sm text-gray-700">• Encoder: Conv(3×3, 32) → Pool → Conv(3×3, 64) → Pool → Flatten</p>
+                        <p className="text-sm text-gray-700">• Decoder: Dense → Reshape → Deconv(3×3, 64) → Upsample → Deconv(3×3, 32)</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Training</h5>
+                        <p className="text-sm text-gray-700">• Learning rate: 0.001, Batch size: 32</p>
+                        <p className="text-sm text-gray-700">• Optimizer: Adam, Loss: MSE or Perceptual</p>
+                        <p className="text-sm text-gray-700">• Use data augmentation (rotation, scaling)</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Hyperparameters</h5>
+                        <p className="text-sm text-gray-700">• Filter size: 3×3 or 5×5</p>
+                        <p className="text-sm text-gray-700">• Pooling: MaxPool(2×2)</p>
+                        <p className="text-sm text-gray-700">• Upsampling: Nearest neighbor or bilinear</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 4 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Architecture</h5>
+                        <p className="text-sm text-gray-700">• Input: 784D → Hidden: 1000D (overcomplete) → Output: 784D</p>
+                        <p className="text-sm text-gray-700">• Use ReLU activation with L1 regularization</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Sparsity Parameters</h5>
+                        <p className="text-sm text-gray-700">• Target sparsity ρ: 0.05-0.1 (5-10% active neurons)</p>
+                        <p className="text-sm text-gray-700">• Sparsity penalty β: 0.1-1.0</p>
+                        <p className="text-sm text-gray-700">• Monitor average activations during training</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Training</h5>
+                        <p className="text-sm text-gray-700">• Learning rate: 0.001, Batch size: 128</p>
+                        <p className="text-sm text-gray-700">• Optimizer: Adam with weight decay</p>
+                        <p className="text-sm text-gray-700">• Train for 100-200 epochs</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 5 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">β Selection</h5>
+                        <p className="text-sm text-gray-700">• β = 1: Standard VAE</p>
+                        <p className="text-sm text-gray-700">• β = 4: Good disentanglement</p>
+                        <p className="text-sm text-gray-700">• β = 10: Strong disentanglement</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Training Strategy</h5>
+                        <p className="text-sm text-gray-700">• Start with β = 0, anneal to target value</p>
+                        <p className="text-sm text-gray-700">• Learning rate: 0.0001, Batch size: 64</p>
+                        <p className="text-sm text-gray-700">• Train for 200-500 epochs</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-green-400">
+                        <h5 className="font-medium text-green-700 mb-1">Evaluation</h5>
+                        <p className="text-sm text-gray-700">• Measure disentanglement score</p>
+                        <p className="text-sm text-gray-700">• Visualize latent space traversal</p>
+                        <p className="text-sm text-gray-700">• Check reconstruction quality</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Practical Usage */}
+              <div className="mt-4 p-4 bg-orange-50 rounded-lg">
+                <h4 className="font-semibold text-orange-800 mb-2">Practical Usage</h4>
+                <div className="space-y-3">
+                  {currentModel === 0 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Dimensionality Reduction</h5>
+                        <p className="text-sm text-gray-700">• Use bottleneck representation as features</p>
+                        <p className="text-sm text-gray-700">• Apply to classification/regression tasks</p>
+                        <p className="text-sm text-gray-700">• Visualize high-dimensional data in 2D/3D</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Anomaly Detection</h5>
+                        <p className="text-sm text-gray-700">• High reconstruction error = anomaly</p>
+                        <p className="text-sm text-gray-700">• Set threshold based on validation data</p>
+                        <p className="text-sm text-gray-700">• Monitor reconstruction loss distribution</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Data Compression</h5>
+                        <p className="text-sm text-gray-700">• Store bottleneck representation</p>
+                        <p className="text-sm text-gray-700">• Reconstruct when needed</p>
+                        <p className="text-sm text-gray-700">• Trade-off: compression ratio vs. quality</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 1 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Data Generation</h5>
+                        <p className="text-sm text-gray-700">• Sample z ~ N(0,I) from prior</p>
+                        <p className="text-sm text-gray-700">• Generate new samples via decoder</p>
+                        <p className="text-sm text-gray-700">• Interpolate between latent codes</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Latent Space Exploration</h5>
+                        <p className="text-sm text-gray-700">• Visualize latent space with t-SNE</p>
+                        <p className="text-sm text-gray-700">• Perform arithmetic in latent space</p>
+                        <p className="text-sm text-gray-700">• Find meaningful directions</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Conditional Generation</h5>
+                        <p className="text-sm text-gray-700">• Train conditional VAE (CVAE)</p>
+                        <p className="text-sm text-gray-700">• Control generation with labels</p>
+                        <p className="text-sm text-gray-700">• Generate specific classes</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 2 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Image Denoising</h5>
+                        <p className="text-sm text-gray-700">• Feed noisy image to encoder</p>
+                        <p className="text-sm text-gray-700">• Get clean reconstruction</p>
+                        <p className="text-sm text-gray-700">• Works for various noise types</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Robust Features</h5>
+                        <p className="text-sm text-gray-700">• Use bottleneck as robust features</p>
+                        <p className="text-sm text-gray-700">• Transfer to downstream tasks</p>
+                        <p className="text-sm text-gray-700">• Better generalization</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Data Cleaning</h5>
+                        <p className="text-sm text-gray-700">• Remove noise from datasets</p>
+                        <p className="text-sm text-gray-700">• Improve data quality</p>
+                        <p className="text-sm text-gray-700">• Preprocessing step</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 3 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Image Compression</h5>
+                        <p className="text-sm text-gray-700">• Store bottleneck representation</p>
+                        <p className="text-sm text-gray-700">• Much smaller than original</p>
+                        <p className="text-sm text-gray-700">• Reconstruct when needed</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Medical Imaging</h5>
+                        <p className="text-sm text-gray-700">• Denoise medical scans</p>
+                        <p className="text-sm text-gray-700">• Compress large datasets</p>
+                        <p className="text-sm text-gray-700">• Feature extraction for diagnosis</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Video Processing</h5>
+                        <p className="text-sm text-gray-700">• Process video frames</p>
+                        <p className="text-sm text-gray-700">• Temporal consistency</p>
+                        <p className="text-sm text-gray-700">• Motion analysis</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 4 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Feature Learning</h5>
+                        <p className="text-sm text-gray-700">• Extract meaningful features</p>
+                        <p className="text-sm text-gray-700">• Each neuron = specialized detector</p>
+                        <p className="text-sm text-gray-700">• Use for transfer learning</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Neuroscience Modeling</h5>
+                        <p className="text-sm text-gray-700">• Model sparse coding in brain</p>
+                        <p className="text-sm text-gray-700">• Understand neural representations</p>
+                        <p className="text-sm text-gray-700">• Study information processing</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Interpretable Features</h5>
+                        <p className="text-sm text-gray-700">• Visualize what each neuron detects</p>
+                        <p className="text-sm text-gray-700">• Understand learned representations</p>
+                        <p className="text-sm text-gray-700">• Feature visualization techniques</p>
+                      </div>
+                    </>
+                  )}
+                  {currentModel === 5 && (
+                    <>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Controllable Generation</h5>
+                        <p className="text-sm text-gray-700">• Modify specific factors</p>
+                        <p className="text-sm text-gray-700">• Generate variations systematically</p>
+                        <p className="text-sm text-gray-700">• Style transfer applications</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Interpretable AI</h5>
+                        <p className="text-sm text-gray-700">• Understand what each dimension controls</p>
+                        <p className="text-sm text-gray-700">• Explain model decisions</p>
+                        <p className="text-sm text-gray-700">• Debug model behavior</p>
+                      </div>
+                      <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                        <h5 className="font-medium text-orange-700 mb-1">Causal Discovery</h5>
+                        <p className="text-sm text-gray-700">• Identify causal factors</p>
+                        <p className="text-sm text-gray-700">• Study factor independence</p>
+                        <p className="text-sm text-gray-700">• Understand data generation process</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Model Navigation Dots */}
+              <div className="flex justify-center space-x-2 mt-6">
+                {models.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentModel(index);
+                      handleReset();
+                    }}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      index === currentModel ? currentModelData.color : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        };
+
+        // Use React 18's createRoot API
+        const root = createRoot(document.getElementById('root'));
+        root.render(<AutoencoderAnimations />);
+    </script>
+</body>
+</html>
