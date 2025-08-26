@@ -126,6 +126,63 @@
             opacity: 0.8;
         }
 
+        .donation-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .donation-section h3 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .donation-section p {
+            color: white;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .donation-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .donation-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .donation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .donation-btn img {
+            width: 20px;
+            height: 20px;
+        }
+
         @media (max-width: 768px) {
             .slides-grid {
                 grid-template-columns: 1fr;
@@ -294,6 +351,25 @@
                     <span class="status-badge status-fix">Needs Fix</span>
                 </a>
             </div>
+        </div>
+
+        <!-- Donation Section -->
+        <div class="donation-section">
+            <h3>☕ Support This Project</h3>
+            <p>If you find these interactive learning materials helpful, consider supporting the development of more educational content.</p>
+            
+            <div class="donation-buttons">
+                <a href="http://buymeacoffee.com/roshchupkin" target="_blank" class="donation-btn">
+                    <span>☕</span>
+                    Buy Me a Coffee
+                </a>
+                <a href="https://www.paypal.com/ncp/payment/S739ZYCWHG464" target="_blank" class="donation-btn">
+                    <span>💳</span>
+                    PayPal Donation
+                </a>
+            </div>
+
+
         </div>
 
         <div class="footer">
