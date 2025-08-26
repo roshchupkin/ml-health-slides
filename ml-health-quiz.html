@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ML for Health • Knowledge Check (40 questions)</title>
+  <style>
+    :root {
+      --bg:#0b1020;
+      --card:#121a33;
+      --muted:#a7b1c2;
+      --text:#eaf0ff;
+      --accent:#6ea8fe;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --border:#1f2a4d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      background: linear-gradient(180deg, #0b1020 0%, #0f1530 100%);
+      color:var(--text);
+      line-height:1.5;
+    }
+    header{
+      padding:32px 20px 16px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.4rem, 2vw + 1rem, 2.1rem);
+      letter-spacing:.2px;
+    }
+    p.lead{margin:0;color:var(--muted)}
+    .controls{
+      margin-top:16px;
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center
+    }
+    .btn{
+      background:#1b2551;border:1px solid var(--border);color:var(--text);
+      padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600;
+      transition:.2s transform ease, .2s opacity ease;
+    }
+    .btn:hover{transform: translateY(-1px)}
+    .btn.secondary{background:transparent}
+    .toggle{
+      display:inline-flex;align-items:center;gap:8px;background:#0e1633;padding:8px 12px;border-radius:12px;border:1px solid var(--border);color:var(--muted)}
+    .wrap{
+      max-width:1100px;margin:0 auto;padding:8px 20px 80px;
+    }
+    .grid{
+      display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:18px;
+    }
+    .card{
+      grid-column: span 12;
+      background:linear-gradient(180deg, #111a38, #0f1733);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .qhead{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      border-bottom:1px dashed var(--border);padding-bottom:10px;margin-bottom:10px;
+    }
+    .qtitle{font-weight:700}
+    .topic{font-size:.8rem;color:var(--muted);background:#0b1536;border:1px solid var(--border);padding:4px 8px;border-radius:999px}
+    .opts{display:grid;gap:10px;margin-top:10px}
+    .opt{
+      display:flex;align-items:flex-start;gap:10px;background:#0e1633;border:1px solid var(--border);padding:10px;border-radius:12px;cursor:pointer;
+      transition:.15s ease transform;
+    }
+    .opt:hover{transform:translateY(-1px)}
+    .opt input{margin-top:2px}
+    .explain{margin-top:10px;color:var(--muted);font-size:.95rem;display:none}
+    .badge{font-weight:700;border-radius:10px;padding:3px 8px;font-size:.8rem}
+    .badge.good{background:rgba(34,197,94,.1);color:var(--good);border:1px solid rgba(34,197,94,.25)}
+    .badge.bad{background:rgba(239,68,68,.12);color:var(--bad);border:1px solid rgba(239,68,68,.24)}
+    .badge.neutral{background:rgba(110,168,254,.12);color:var(--accent);border:1px solid rgba(110,168,254,.28)}
+    .opt.correct{outline:2px solid rgba(34,197,94,.5)}
+    .opt.wrong{outline:2px solid rgba(239,68,68,.5)}
+    .scorebar{
+      margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center
+    }
+    .score{
+      background:#0e1633;border:1px solid var(--border);padding:10px 14px;border-radius:12px;color:var(--text);font-weight:700
+    }
+    .kpi{display:flex;gap:8px;align-items:center;color:var(--muted)}
+    .kpi .dot{width:10px;height:10px;border-radius:50%}
+    .kpi .dot.good{background:var(--good)} .kpi .dot.bad{background:var(--bad)} .kpi .dot.neutral{background:var(--accent)}
+    footer{max-width:1100px;margin:40px auto 50px;color:var(--muted);padding:0 20px}
+    .small{font-size:.9rem;color:var(--muted)}
+    .sticky{
+      position:sticky; top:0; z-index:5; backdrop-filter: blur(10px);
+      background: rgba(11,16,32,.65);
+      border-bottom:1px solid rgba(255,255,255,.05);
+      padding:8px 20px; display:flex; justify-content:space-between; align-items:center;
+    }
+    .logo{font-weight:800;letter-spacing:.5px}
+    .hidden{display:none}
+    @media(min-width:900px){
+      .card{grid-column: span 6;}
+    }
+  </style>
+</head>
+<body>
+  <div class="sticky">
+    <div class="logo">ML‑Health Quiz</div>
+    <div class="scorebar">
+      <div class="score" id="score">Score: 0 / 40</div>
+      <div class="kpi"><span class="dot good"></span>Correct</div>
+      <div class="kpi"><span class="dot bad"></span>Incorrect</div>
+      <div class="kpi"><span class="dot neutral"></span>Unanswered</div>
+    </div>
+  </div>
+  <header>
+    <h1>Machine Learning for Health — Knowledge Check</h1>
+    <p class="lead">40 multiple‑choice questions aligned with your slides: ML basics, loss & optimization, overfitting, cross‑validation, regularization, metrics, calibration, class imbalance, external validity, and more.</p>
+    <div class="controls">
+      <label class="toggle">
+        <input type="checkbox" id="shuffle" /> Shuffle questions
+      </label>
+      <button class="btn" id="startBtn">Render / Reset</button>
+      <button class="btn secondary" id="revealBtn">Reveal all answers</button>
+      <button class="btn secondary" id="hideBtn">Hide all explanations</button>
+      <button class="btn" id="clearBtn">Clear selections</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="grid" id="quizGrid"></div>
+  </main>
+  <footer>
+    <div class="small">Tip: Use this as a standalone HTML file on GitHub Pages. Questions are evaluated instantly on selection; you can reveal explanations or reset anytime.</div>
+  </footer>
+
+<script>
+const QUESTIONS = [
+  // BASICS
+  {q:"Which best contrasts traditional programming vs. machine learning?", 
+   a:["Rules + Data → Answers; ML: Data + Answers → Rules","Both require explicit rules to generate answers","ML is only for images","Traditional programming needs labeled data"], 
+   correct:0, topic:"Basics", exp:"In ML, we learn mapping rules from labeled examples: data + answers (labels) → the model (rules)."},
+  {q:"Which is a supervised learning task?", 
+   a:["Grouping patients by similarity without labels","Predicting 30‑day readmission (yes/no) using EHR features","Compressing data to fewer dimensions","Clustering chest X‑rays by texture"], 
+   correct:1, topic:"Basics", exp:"Supervised tasks have labels. Predicting readmission (binary label) is supervised classification."},
+  {q:"Which is a regression problem in health data?", 
+   a:["Classifying presence of diabetes","Estimating systolic blood pressure next visit","Clustering phenotypes","Detecting pneumonia in X‑ray"], 
+   correct:1, topic:"Basics", exp:"Regression predicts a continuous target like blood pressure."},
+  {q:"High‑dimensional data (p ≫ n) mainly risks:", 
+   a:["Underfitting from too few features","Overfitting from too much flexibility","Perfect generalization","No effect on variance"], 
+   correct:1, topic:"High‑Dimensional", exp:"With many features and limited samples, models can fit noise—regularization and feature selection help."},
+
+  // LOSS & OPTIMIZATION
+  {q:"Cross‑entropy loss is typically used for:", 
+   a:["Regression","Classification","Clustering","Dimensionality reduction"], 
+   correct:1, topic:"Loss", exp:"Cross‑entropy measures discrepancy between predicted probabilities and true class labels."},
+  {q:"Mean squared error (MSE) is the standard loss for:", 
+   a:["Binary classification","Regression","Clustering validation","Anomaly detection"], 
+   correct:1, topic:"Loss", exp:"MSE penalizes squared residuals—common for regression."},
+  {q:"Gradient Descent updates parameters to:", 
+   a:["Increase training loss","Minimize the chosen loss function","Randomly explore parameter space","Maximize variance"], 
+   correct:1, topic:"Optimization", exp:"Parameters are nudged opposite the gradient to reduce loss."},
+  {q:"Adam optimizer combines ideas from:", 
+   a:["LASSO and Ridge","Momentum and RMSprop","Dropout and BatchNorm","Bagging and Boosting"], 
+   correct:1, topic:"Optimization", exp:"Adam = Momentum (1st moment) + RMSprop (2nd moment) with bias correction."},
+  {q:"Stochastic Gradient Descent differs from batch GD by:", 
+   a:["Using the full dataset each step","Using random mini‑batches for noisy but fast updates","Not computing gradients","Converging in one step"], 
+   correct:1, topic:"Optimization", exp:"Mini‑batches give faster, noisier updates that often generalize well."},
+
+  // OVERFITTING, BIAS-VARIANCE
+  {q:"Overfitting is best described as:", 
+   a:["Low training error and low test error","Low training error but high test error","High training and test error","High bias but low variance"], 
+   correct:1, topic:"Overfitting", exp:"Model captures noise in training data and fails to generalize."},
+  {q:"Underfitting usually indicates:", 
+   a:["High bias, model too simple","High variance, model too complex","Data leakage","Optimal capacity"], 
+   correct:0, topic:"Bias-Variance", exp:"Underfitting arises from overly restrictive models (high bias)."},
+  {q:"Adding more training data typically:", 
+   a:["Increases variance of estimates","Decreases variance and can help generalization","Always fixes high bias","Always harms calibration"], 
+   correct:1, topic:"Bias-Variance", exp:"More data reduces variance; it may not fix bias if the model is too simple."},
+  {q:"Early stopping acts primarily as:", 
+   a:["Data augmentation","Regularization","Optimizer","Calibration method"], 
+   correct:1, topic:"Regularization", exp:"Halting training before overfitting reduces effective model capacity."},
+
+  // CROSS-VALIDATION & SPLITS
+  {q:"Main reason to use k‑fold cross‑validation:", 
+   a:["To memorize labels","To reduce variance of performance estimates via multiple splits","To increase sample size by duplication","To replace a test set"], 
+   correct:1, topic:"Cross‑Validation", exp:"Averaging across folds yields a stabler estimate than a single split."},
+  {q:"Nested cross‑validation is particularly for:", 
+   a:["Feature engineering","Fair threshold selection","Unbiased hyperparameter tuning","Data augmentation"], 
+   correct:2, topic:"Cross‑Validation", exp:"Outer loop estimates generalization; inner loop tunes hyperparameters."},
+  {q:"In a train/validation/test split, the validation set is used to:", 
+   a:["Assess final generalization","Tune models/hyperparameters","Train the final model","Perform external validation"], 
+   correct:1, topic:"Splits", exp:"Validation guides model choices; the untouched test set estimates final performance."},
+  {q:"Why should the test set remain untouched until the end?", 
+   a:["To keep code simple","To avoid optimistic bias from 'peeking'","Because metrics only run once","To speed up training"], 
+   correct:1, topic:"Splits", exp:"Repeatedly choosing based on test results leaks information and biases estimates."},
+  {q:"Which scenario is data leakage?", 
+   a:["Scaling features using only training fold parameters","Including future lab values when predicting current risk","Using nested CV","Stratified k‑folds"], 
+   correct:1, topic:"Leakage", exp:"Information from the future/outcome leaking into features inflates performance."},
+
+  // REGULARIZATION
+  {q:"Regularization primarily:", 
+   a:["Penalizes model complexity to reduce overfitting","Increases model variance","Improves training loss at all costs","Selects thresholds"], 
+   correct:0, topic:"Regularization", exp:"Penalties constrain parameter magnitudes to improve generalization."},
+  {q:"L1 regularization (LASSO) tends to:", 
+   a:["Shrink coefficients smoothly toward zero, none exactly zero","Set some coefficients exactly to zero (sparsity)","Increase all coefficients","Affect only intercept"], 
+   correct:1, topic:"Regularization", exp:"L1 induces sparsity, helpful for feature selection in p≫n."},
+  {q:"Elastic Net is:", 
+   a:["L2 only","L1 only","A combination of L1 and L2 penalties","Dropout"], 
+   correct:2, topic:"Regularization", exp:"Elastic Net blends LASSO and Ridge to balance sparsity and stability."},
+
+  // METRICS & THRESHOLDS
+  {q:"For highly imbalanced medical outcomes, a more informative metric than accuracy is:", 
+   a:["Precision‑Recall AUC","Plain accuracy","Mean squared error","R²"], 
+   correct:0, topic:"Metrics", exp:"PR‑AUC focuses on positive class performance when negatives dominate."},
+  {q:"Sensitivity (recall, true positive rate) measures:", 
+   a:["TN / (TN + FP)","TP / (TP + FN)","TP / (TP + FP)","FP / (FP + TN)"], 
+   correct:1, topic:"Metrics", exp:"Sensitivity = proportion of actual positives correctly identified."},
+  {q:"Specificity (true negative rate) equals:", 
+   a:["TN / (TN + FP)","TP / (TP + FN)","TP / (TP + FP)","FP / (FP + TN)"], 
+   correct:0, topic:"Metrics", exp:"Specificity = proportion of actual negatives correctly identified."},
+  {q:"Precision (PPV) equals:", 
+   a:["TP / (TP + FP)","TP / (TP + FN)","TN / (TN + FP)","FN / (TP + FN)"], 
+   correct:0, topic:"Metrics", exp:"PPV = fraction of predicted positives that are correct."},
+  {q:"Changing the decision threshold primarily trades off:", 
+   a:["Recall and precision","Model capacity and bias","Optimizer speed and accuracy","Training time and memory"], 
+   correct:0, topic:"Thresholds", exp:"As threshold increases, precision often rises while recall falls."},
+  {q:"ROC‑AUC summarizes:", 
+   a:["Average precision over thresholds","Calibration slope","TPR vs. FPR trade‑off across thresholds","Model sparsity"], 
+   correct:2, topic:"Metrics", exp:"ROC‑AUC integrates TPR vs. FPR over thresholds."},
+
+  // CALIBRATION & DCA
+  {q:"Discrimination vs. calibration: discrimination refers to:", 
+   a:["How close predicted probabilities are to observed risks","How well the model separates cases from controls","How stable coefficients are","How features correlate"], 
+   correct:1, topic:"Calibration", exp:"Discrimination is ranking ability (e.g., ROC‑AUC); calibration is probability accuracy."},
+  {q:"A reliability (calibration) plot compares:", 
+   a:["Predicted risk vs. observed outcome rate in bins","TPR vs. FPR","Loss vs. epochs","Error vs. hyperparameters"], 
+   correct:0, topic:"Calibration", exp:"Well‑calibrated models have predictions matching observed frequencies."},
+  {q:"Decision Curve Analysis (DCA) plots:", 
+   a:["Net benefit vs. threshold probability","Loss vs. learning rate","AUC vs. epoch","Recall vs. precision"], 
+   correct:0, topic:"DCA", exp:"DCA evaluates clinical utility by comparing net benefit across thresholds."},
+
+  // CLASS IMBALANCE
+  {q:"Which is NOT a typical approach to class imbalance?", 
+   a:["Oversampling minority class","Using class‑weighted loss","Under‑sampling majority class","Removing validation set"], 
+   correct:3, topic:"Imbalance", exp:"Validation is still needed; the first three are common imbalance strategies."},
+  {q:"Calibration can degrade with:", 
+   a:["Aggressive oversampling without care","Proper nested CV","External validation","Standardization"], 
+   correct:0, topic:"Calibration", exp:"Resampling or thresholding can shift calibration if not corrected."},
+
+  // EXTERNAL VALIDITY & SHIFT
+  {q:"External validation primarily tests:", 
+   a:["Training loss","Generalization to new institutions/populations","Speed of inference","Hyperparameter stability"], 
+   correct:1, topic:"External Validity", exp:"External validity assesses performance under distribution shift."},
+  {q:"A common threat to external validity is:", 
+   a:["Covariate shift between hospitals","Proper stratification","Reproducible pipelines","Transparent reporting"], 
+   correct:0, topic:"External Validity", exp:"Different patient mixes and measurement practices cause shift."},
+  {q:"When reporting performance, it is good practice to include:", 
+   a:["Point estimate only","Confidence intervals or uncertainty estimates","Only training metrics","Only best fold results"], 
+   correct:1, topic:"Reporting", exp:"Uncertainty (e.g., 95% CI via CV or bootstrap) contextualizes performance."},
+
+  // FEATURES & SCALING
+  {q:"Feature scaling is most critical for:", 
+   a:["Tree‑based models","Distance/gradient‑based models (k‑NN, SVM, LR with GD)","Rule‑based systems","Naïve Bayes"], 
+   correct:1, topic:"Scaling", exp:"Models relying on distances or gradient magnitudes are sensitive to feature scales."},
+  {q:"Standardization vs. min‑max normalization:", 
+   a:["Standardization rescales to [0,1]","Min‑max sets mean 0, sd 1","Standardization sets mean 0, sd 1; min‑max maps to [0,1]","They are identical"], 
+   correct:2, topic:"Scaling", exp:"Standardization uses z‑scores; min‑max rescales to a fixed range."},
+  {q:"Feature engineering should be done:", 
+   a:["Before splitting data","Using only training folds to avoid leakage","On full data to be stable","Only after external validation"], 
+   correct:1, topic:"Leakage", exp:"Compute transformations within each training fold and apply to its validation/test."},
+
+  // HYPERPARAMETERS & SEARCH
+  {q:"Random search vs. grid search for many hyperparameters:", 
+   a:["Grid is always better","Random often finds good regions faster","They are equivalent","Random cannot handle continuous ranges"], 
+   correct:1, topic:"Hyperparameters", exp:"Random explores more unique combinations in the same budget; efficient in high‑dimensional spaces."},
+  {q:"Learning curves help diagnose:", 
+   a:["Optimizer divergence only","Bias‑variance problems and whether more data helps","Hyperparameter ranges","Data leakage"], 
+   correct:1, topic:"Diagnostics", exp:"Plotting performance vs. training size distinguishes high bias vs. variance."},
+  {q:"Which statement about cross‑entropy is true?", 
+   a:["Loss increases as the model assigns higher probability to the true class","Loss decreases as predicted probability for the true class increases","It is symmetric wrt classes","It ignores probabilities"], 
+   correct:1, topic:"Loss", exp:"Cross‑entropy rewards confident correct predictions; penalizes confident mistakes."},
+  {q:"Momentum in optimization helps by:", 
+   a:["Adding noise","Averaging labels","Smoothing updates to traverse ravines and avoid small minima","Eliminating gradients"], 
+   correct:2, topic:"Optimization", exp:"Momentum accumulates past gradients to damp oscillations and speed convergence."},
+
+  // MISC PRACTICALS
+  {q:"Bootstrapping vs. k‑fold CV:", 
+   a:["Both estimate generalization; bootstrap resamples with replacement from the training set","Bootstrap requires external test set","K‑fold cannot estimate uncertainty","Bootstrap cannot handle small datasets"], 
+   correct:0, topic:"Validation", exp:"Both are resampling strategies; bootstrap enables CI estimation via replicates."},
+  {q:"Why keep a separate hold‑out test after CV hyperparameter tuning?", 
+   a:["It’s unnecessary","To provide a final unbiased estimate after model selection","To speed training","For calibration only"], 
+   correct:1, topic:"Splits", exp:"Model selection on validation/CV can bias estimates; a held‑out test guards against this."}
+];
+
+// --- state ---
+let state = {
+  answered: new Array(QUESTIONS.length).fill(null), // null | true | false
+  score: 0,
+  byTopic: {} // topic -> {correct, total}
+};
+
+function shuffleArray(arr){
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function resetState(){
+  state.answered = new Array(QUESTIONS.length).fill(null);
+  state.score = 0;
+  state.byTopic = {};
+  updateScoreboard();
+}
+
+function updateScoreboard(){
+  const answeredCount = state.answered.filter(v=>v!==null).length;
+  const scoreEl = document.getElementById('score');
+  scoreEl.textContent = `Score: ${state.score} / ${QUESTIONS.length}`;
+}
+
+function render(){
+  const grid = document.getElementById('quizGrid');
+  grid.innerHTML = "";
+  resetState();
+
+  let items = QUESTIONS.map((q,i)=>({id:i, ...q}));
+  if(document.getElementById('shuffle').checked){
+    items = shuffleArray(items);
+  }
+
+  items.forEach((item, idx)=>{
+    if(!state.byTopic[item.topic]) state.byTopic[item.topic] = {correct:0,total:0};
+    state.byTopic[item.topic].total += 1;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.qid = item.id;
+
+    const head = document.createElement('div');
+    head.className = 'qhead';
+    const title = document.createElement('div');
+    title.className = 'qtitle';
+    title.innerHTML = `<span class="badge neutral">Q${idx+1}</span> ${item.q}`;
+    const topic = document.createElement('div');
+    topic.className = 'topic';
+    topic.textContent = item.topic;
+    head.appendChild(title); head.appendChild(topic);
+
+    const opts = document.createElement('div');
+    opts.className = 'opts';
+
+    item.a.forEach((optText, oi)=>{
+      const label = document.createElement('label');
+      label.className = 'opt';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'q'+item.id;
+      input.value = oi;
+      const span = document.createElement('span');
+      span.innerHTML = `<strong>${String.fromCharCode(65+oi)}.</strong> ${optText}`;
+
+      label.appendChild(input); label.appendChild(span);
+      opts.appendChild(label);
+
+      input.addEventListener('change', () => {
+        if(state.answered[item.id] !== null) return; // lock once answered
+        const correct = (oi === item.correct);
+        state.answered[item.id] = correct;
+        if(correct){
+          state.score += 1;
+          label.classList.add('correct');
+          const badge = head.querySelector('.badge'); badge.className = 'badge good'; badge.textContent = 'Correct';
+          state.byTopic[item.topic].correct += 1;
+        } else {
+          label.classList.add('wrong');
+          const badge = head.querySelector('.badge'); badge.className = 'badge bad'; badge.textContent = 'Incorrect';
+          // highlight the correct option
+          [...opts.children].forEach(lab=>{
+            const idx = parseInt(lab.querySelector('input').value,10);
+            if(idx === item.correct) lab.classList.add('correct');
+          });
+        }
+        // disable all radios
+        [...opts.querySelectorAll('input')].forEach(r=>r.disabled = true);
+        // show explanation
+        explain.style.display = 'block';
+        updateScoreboard();
+      });
+    });
+
+    const explain = document.createElement('div');
+    explain.className = 'explain';
+    explain.innerHTML = `<em>Explanation:</em> ${item.exp}`;
+
+    card.appendChild(head);
+    card.appendChild(opts);
+    card.appendChild(explain);
+    grid.appendChild(card);
+  });
+  updateScoreboard();
+}
+
+document.getElementById('startBtn').addEventListener('click', render);
+document.getElementById('revealBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.explain').forEach(e=>e.style.display='block');
+});
+document.getElementById('hideBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('.explain').forEach(e=>e.style.display='none');
+});
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  // clear selections and visual states, keep order
+  state.answered = new Array(QUESTIONS.length).fill(null);
+  state.score = 0;
+  updateScoreboard();
+  document.querySelectorAll('.card').forEach(card=>{
+    const badge = card.querySelector('.badge'); badge.className = 'badge neutral'; badge.textContent = 'Unanswered';
+    card.querySelectorAll('input[type=radio]').forEach(r=>{ r.checked=false; r.disabled=false; });
+    card.querySelectorAll('.opt').forEach(l=>l.classList.remove('correct','wrong'));
+    card.querySelector('.explain').style.display='none';
+  });
+});
+
+// Render once on load
+render();
+</script>
+</body>
+</html>

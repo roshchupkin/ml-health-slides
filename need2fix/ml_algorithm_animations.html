@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Algorithm Animations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: none; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-xl">
+                 <div class="text-center mb-6">
+             <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                 Healthcare ML Algorithm Animations
+             </h1>
+             <p class="text-gray-600">
+                 Interactive visualizations of machine learning algorithms in healthcare applications
+             </p>
+         </div>
+
+        <!-- Algorithm selector -->
+        <div class="flex items-center justify-center space-x-4 mb-6">
+            <button
+                id="prevAlgorithm"
+                class="p-2 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors"
+                aria-label="Previous algorithm"
+            >
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="text-center min-w-64">
+                <h2 id="algorithmName" class="text-xl font-bold text-gray-800"></h2>
+                <p id="algorithmDescription" class="text-sm text-gray-600"></p>
+            </div>
+            
+            <button
+                id="nextAlgorithm"
+                class="p-2 bg-gray-200 hover:bg-gray-300 rounded-full transition-colors"
+                aria-label="Next algorithm"
+            >
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Main visualization -->
+        <div id="visualization" class="relative w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-6 overflow-hidden">
+            <!-- Visualization content will be dynamically generated -->
+        </div>
+
+                 <!-- Current step info -->
+         <div class="mt-6 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+             <div class="flex items-center justify-between mb-3">
+                 <h3 id="stepTitle" class="font-bold text-gray-800 text-lg"></h3>
+                 <span id="stepCounter" class="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border"></span>
+             </div>
+             <p id="stepDescription" class="text-gray-700 text-base leading-relaxed"></p>
+             
+             <!-- Algorithm details -->
+             <div id="algorithmDetails" class="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                         <h4 class="font-semibold text-gray-800 mb-2">Key Concepts:</h4>
+                         <ul id="keyConcepts" class="text-sm text-gray-600 space-y-1"></ul>
+                     </div>
+                     <div>
+                         <h4 class="font-semibold text-gray-800 mb-2">Use Cases:</h4>
+                         <ul id="useCases" class="text-sm text-gray-600 space-y-1"></ul>
+                     </div>
+                 </div>
+             </div>
+         </div>
+
+                 <!-- Controls -->
+         <div class="flex items-center justify-center space-x-6 mt-8">
+             <button
+                 id="playButton"
+                 class="flex items-center space-x-3 px-8 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                 aria-label="Play animation"
+             >
+                 <span id="playIcon" class="text-xl">▶</span>
+                 <span id="playText" class="text-base">Play</span>
+             </button>
+             
+             <button
+                 id="resetButton"
+                 class="flex items-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-gray-300"
+                 aria-label="Reset animation"
+             >
+                 <span class="text-lg">↻</span>
+                 <span>Reset</span>
+             </button>
+             
+             <div class="flex items-center space-x-3 bg-white px-4 py-2 rounded-xl border border-gray-300 shadow-sm">
+                 <label for="speed-select" class="text-sm font-medium text-gray-700">Speed:</label>
+                 <select
+                     id="speed-select"
+                     class="px-3 py-1 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     aria-label="Animation speed"
+                 >
+                     <option value="2500">Slow</option>
+                     <option value="1500" selected>Normal</option>
+                     <option value="800">Fast</option>
+                 </select>
+             </div>
+         </div>
+
+        <!-- Algorithm thumbnails -->
+        <div id="algorithmThumbnails" class="mt-8 grid grid-cols-3 md:grid-cols-6 gap-2">
+            <!-- Algorithm buttons will be dynamically generated -->
+        </div>
+
+        <!-- Step timeline -->
+        <div class="mt-6">
+            <div id="stepTimeline" class="flex justify-between items-center">
+                <!-- Step buttons will be dynamically generated -->
+            </div>
+            
+            <!-- Timeline connector -->
+            <div class="relative mt-2">
+                <div class="absolute top-0 left-0 right-0 h-0.5 bg-gray-200" style="top: -28px;"></div>
+                <div id="timelineProgress" class="absolute top-0 left-0 h-0.5 transition-all duration-1000" style="top: -28px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        });
+
+        class MLAlgorithmAnimations {
+            constructor() {
+                this.currentAlgorithm = 0;
+                this.isPlaying = false;
+                this.step = 0;
+                this.speed = 1500;
+                this.interval = null;
+
+                                 this.algorithms = [
+                     {
+                         name: "Linear Regression",
+                         description: "Predicting continuous health outcomes from patient data",
+                         steps: [
+                             { title: "Initialize", description: "Start with a random line defined by slope (m) and intercept (b). The line equation is y = mx + b, where y could be blood pressure, glucose levels, or other health metrics." },
+                             { title: "Calculate Error", description: "Measure the distance between each patient's actual health outcome and the predicted outcome using Mean Squared Error (MSE)." },
+                             { title: "Update Parameters", description: "Use gradient descent to adjust slope and intercept in the direction that reduces prediction error for patient outcomes." },
+                             { title: "Repeat", description: "Continue updating parameters until the error stops decreasing significantly, ensuring accurate health predictions." },
+                             { title: "Final Model", description: "The optimal line that best predicts health outcomes based on patient characteristics and biomarkers." }
+                         ],
+                         color: "bg-blue-500",
+                         keyConcepts: [
+                             "Linear relationship: y = mx + b",
+                             "Gradient descent optimization",
+                             "Mean Squared Error (MSE)",
+                             "Least squares method"
+                         ],
+                         useCases: [
+                             "Blood pressure prediction",
+                             "Glucose level forecasting",
+                             "Drug dosage calculation",
+                             "Disease progression modeling"
+                         ]
+                     },
+                                         {
+                         name: "K-Means Clustering",
+                         description: "Grouping patients into similar health profiles",
+                         steps: [
+                             { title: "Initialize Centroids", description: "Randomly place K cluster centers (centroids) in the patient data space. These represent initial patient groups based on health characteristics." },
+                             { title: "Assign Points", description: "Calculate the distance from each patient's health profile to all centroids. Assign each patient to the nearest centroid, forming K patient groups." },
+                             { title: "Update Centroids", description: "Move each centroid to the mean position of all patients assigned to that cluster. This becomes the new representative health profile for the group." },
+                             { title: "Check Convergence", description: "Repeat the assignment and update steps until centroids stop moving significantly, ensuring stable patient groupings." },
+                             { title: "Final Clusters", description: "Patients are now grouped into K distinct health profiles, each represented by its final centroid position." }
+                         ],
+                         color: "bg-green-500",
+                         keyConcepts: [
+                             "Unsupervised learning",
+                             "Centroid-based clustering",
+                             "Euclidean distance",
+                             "Iterative optimization"
+                         ],
+                         useCases: [
+                             "Patient risk stratification",
+                             "Disease subtype identification",
+                             "Treatment response grouping",
+                             "Population health segmentation"
+                         ]
+                     },
+                                         {
+                         name: "Decision Tree",
+                         description: "Building clinical decision support rules",
+                         steps: [
+                             { title: "Root Node", description: "Start with all patient training data at the root node. This node contains the complete patient dataset and represents the first clinical decision point." },
+                             { title: "Find Best Split", description: "Evaluate all clinical features (symptoms, lab values, demographics) and their possible split points. Choose the feature and threshold that best separates disease classes (e.g., using Gini impurity or information gain)." },
+                             { title: "Create Branches", description: "Split the patient data into two or more branches based on the chosen clinical feature. Each branch represents a different diagnostic pathway." },
+                             { title: "Recurse", description: "Apply the same process recursively to each branch. Continue until stopping criteria are met (e.g., maximum depth, minimum patients per leaf)." },
+                             { title: "Leaf Nodes", description: "Terminal nodes contain the final clinical predictions. For diagnosis, predict the most likely disease; for prognosis, predict the expected outcome." }
+                         ],
+                         color: "bg-purple-500",
+                         keyConcepts: [
+                             "Supervised learning",
+                             "Tree-based model",
+                             "Information gain/Gini impurity",
+                             "Recursive partitioning"
+                         ],
+                         useCases: [
+                             "Disease diagnosis",
+                             "Treatment recommendation",
+                             "Patient risk assessment",
+                             "Clinical outcome prediction"
+                         ]
+                     },
+                                         {
+                         name: "Neural Network",
+                         description: "Learning complex patterns in medical data",
+                         steps: [
+                             { title: "Forward Pass", description: "Patient data (symptoms, lab results, imaging) flows through the network layer by layer. Each neuron computes a weighted sum of inputs, applies an activation function, and passes the result to the next layer." },
+                             { title: "Calculate Loss", description: "Compare the network's medical prediction with the true diagnosis using a loss function (e.g., cross-entropy for disease classification, MSE for health outcome regression). This measures prediction accuracy." },
+                             { title: "Backpropagation", description: "Calculate gradients of the loss with respect to each weight in the network. This tells us how much each weight contributed to the diagnostic error." },
+                             { title: "Update Weights", description: "Adjust all weights using the calculated gradients and a learning rate. Weights are updated in the direction that reduces diagnostic prediction errors." },
+                             { title: "Repeat", description: "Continue the forward pass, loss calculation, backpropagation, and weight updates until the model converges or reaches maximum epochs for optimal medical predictions." }
+                         ],
+                         color: "bg-red-500",
+                         keyConcepts: [
+                             "Deep learning",
+                             "Backpropagation",
+                             "Activation functions",
+                             "Gradient descent"
+                         ],
+                         useCases: [
+                             "Medical image analysis",
+                             "Electronic health record analysis",
+                             "Drug discovery",
+                             "Personalized medicine"
+                         ]
+                     },
+                                         {
+                         name: "Random Forest",
+                         description: "Ensemble clinical decision making",
+                         steps: [
+                             { title: "Bootstrap Sample", description: "Create multiple random subsets of the patient training data using bootstrap sampling (sampling with replacement). Each subset may contain duplicate patients for robust training." },
+                             { title: "Build Trees", description: "Train a clinical decision tree on each bootstrap sample. Each tree is built independently and may have different diagnostic pathways due to the different patient subsets." },
+                             { title: "Random Features", description: "For each split in each tree, randomly select a subset of clinical features to consider. This increases diversity among trees and reduces overfitting to specific patient populations." },
+                             { title: "Combine Predictions", description: "For a new patient, pass their data through all trees. For disease classification, use majority voting; for prognosis, average the predictions." },
+                             { title: "Final Prediction", description: "The ensemble clinical prediction is more robust and accurate than individual trees, as it reduces variance and overfitting through averaging across multiple diagnostic models." }
+                         ],
+                         color: "bg-orange-500",
+                         keyConcepts: [
+                             "Ensemble learning",
+                             "Bootstrap aggregating (Bagging)",
+                             "Feature randomization",
+                             "Majority voting"
+                         ],
+                         useCases: [
+                             "Multi-disease diagnosis",
+                             "Treatment outcome prediction",
+                             "Patient survival analysis",
+                             "Clinical risk stratification"
+                         ]
+                     },
+                                         {
+                         name: "Gradient Descent",
+                         description: "Optimizing medical prediction models",
+                         steps: [
+                             { title: "Initialize", description: "Start at a random point on the loss surface. This point represents our initial model parameters (e.g., weights in a medical prediction model)." },
+                             { title: "Calculate Gradient", description: "Compute the gradient (partial derivatives) of the medical prediction loss function with respect to each parameter. The gradient points in the direction of steepest ascent." },
+                             { title: "Take Step", description: "Move in the opposite direction of the gradient (descent direction). The step size is controlled by the learning rate parameter to ensure stable medical model training." },
+                             { title: "Update Position", description: "Update parameters using the formula: new_position = old_position - learning_rate × gradient. This moves us closer to the optimal medical prediction model." },
+                             { title: "Converge", description: "Repeat the gradient calculation and parameter updates until we reach a local minimum or the gradient becomes very small, ensuring optimal medical model performance." }
+                         ],
+                         color: "bg-indigo-500",
+                         keyConcepts: [
+                             "Optimization algorithm",
+                             "Gradient calculation",
+                             "Learning rate",
+                             "Local vs global minima"
+                         ],
+                         useCases: [
+                             "Medical AI model training",
+                             "Clinical prediction optimization",
+                             "Drug response modeling",
+                             "Healthcare outcome prediction"
+                         ]
+                     }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.renderAlgorithmThumbnails();
+                this.updateDisplay();
+                this.renderVisualization();
+            }
+
+            setupEventListeners() {
+                const prevButton = document.getElementById('prevAlgorithm');
+                const nextButton = document.getElementById('nextAlgorithm');
+                const playButton = document.getElementById('playButton');
+                const resetButton = document.getElementById('resetButton');
+                const speedSelect = document.getElementById('speed-select');
+                
+                if (prevButton) prevButton.addEventListener('click', () => this.prevAlgorithm());
+                if (nextButton) nextButton.addEventListener('click', () => this.nextAlgorithm());
+                if (playButton) playButton.addEventListener('click', () => this.handlePlay());
+                if (resetButton) resetButton.addEventListener('click', () => this.handleReset());
+                if (speedSelect) {
+                    speedSelect.addEventListener('change', (e) => {
+                        this.speed = Number(e.target.value);
+                        if (this.isPlaying) {
+                            this.stopAnimation();
+                            this.startAnimation();
+                        }
+                    });
+                }
+            }
+
+            get currentAlg() {
+                return this.algorithms[this.currentAlgorithm];
+            }
+
+            nextAlgorithm() {
+                this.currentAlgorithm = (this.currentAlgorithm + 1) % this.algorithms.length;
+                this.handleReset();
+                this.updateDisplay();
+                this.renderVisualization();
+            }
+
+            prevAlgorithm() {
+                this.currentAlgorithm = (this.currentAlgorithm - 1 + this.algorithms.length) % this.algorithms.length;
+                this.handleReset();
+                this.updateDisplay();
+                this.renderVisualization();
+            }
+
+            handlePlay() {
+                if (this.step >= this.currentAlg.steps.length - 1) {
+                    this.step = 0;
+                }
+                this.isPlaying = !this.isPlaying;
+                
+                if (this.isPlaying) {
+                    this.startAnimation();
+                } else {
+                    this.stopAnimation();
+                }
+                
+                this.updatePlayButton();
+            }
+
+            handleReset() {
+                this.isPlaying = false;
+                this.step = 0;
+                this.stopAnimation();
+                this.updateDisplay();
+                this.updatePlayButton();
+                this.renderVisualization();
+            }
+
+            startAnimation() {
+                this.interval = setInterval(() => {
+                    if (this.step >= this.currentAlg.steps.length - 1) {
+                        this.isPlaying = false;
+                        this.stopAnimation();
+                        this.updatePlayButton();
+                        return;
+                    }
+                    this.step++;
+                    this.updateDisplay();
+                    this.renderVisualization();
+                }, this.speed);
+            }
+
+            stopAnimation() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+            }
+
+            updateDisplay() {
+                const algorithmName = document.getElementById('algorithmName');
+                const algorithmDescription = document.getElementById('algorithmDescription');
+                const stepTitle = document.getElementById('stepTitle');
+                const stepCounter = document.getElementById('stepCounter');
+                const stepDescription = document.getElementById('stepDescription');
+                const keyConcepts = document.getElementById('keyConcepts');
+                const useCases = document.getElementById('useCases');
+                
+                if (algorithmName) algorithmName.textContent = this.currentAlg.name;
+                if (algorithmDescription) algorithmDescription.textContent = this.currentAlg.description;
+                if (stepTitle) stepTitle.textContent = `Step ${this.step + 1}: ${this.currentAlg.steps[this.step]?.title || 'Unknown Step'}`;
+                if (stepCounter) stepCounter.textContent = `${this.step + 1} of ${this.currentAlg.steps.length}`;
+                if (stepDescription) stepDescription.textContent = this.currentAlg.steps[this.step]?.description || 'No description available';
+                
+                // Update key concepts
+                if (keyConcepts) {
+                    keyConcepts.innerHTML = '';
+                    this.currentAlg.keyConcepts.forEach(concept => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start space-x-2';
+                        li.innerHTML = `<span class="text-blue-500 mt-1">•</span><span>${concept}</span>`;
+                        keyConcepts.appendChild(li);
+                    });
+                }
+                
+                // Update use cases
+                if (useCases) {
+                    useCases.innerHTML = '';
+                    this.currentAlg.useCases.forEach(useCase => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start space-x-2';
+                        li.innerHTML = `<span class="text-green-500 mt-1">•</span><span>${useCase}</span>`;
+                        useCases.appendChild(li);
+                    });
+                }
+                
+                this.updatePlayButton();
+                this.renderStepTimeline();
+                this.updateTimelineProgress();
+            }
+
+            updatePlayButton() {
+                const playButton = document.getElementById('playButton');
+                const playText = document.getElementById('playText');
+                const playIcon = document.getElementById('playIcon');
+                
+                if (!playButton || !playText || !playIcon) {
+                    console.warn('Play button elements not found');
+                    return;
+                }
+                
+                // Remove previous color classes and add new one
+                playButton.classList.remove('bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-red-500', 'bg-orange-500', 'bg-indigo-500');
+                playButton.classList.add(this.currentAlg.color);
+                
+                if (this.isPlaying) {
+                    playIcon.textContent = '⏸';
+                    playText.textContent = 'Pause';
+                    playButton.setAttribute('aria-label', 'Pause animation');
+                } else {
+                    playIcon.textContent = '▶';
+                    playText.textContent = 'Play';
+                    playButton.setAttribute('aria-label', 'Play animation');
+                }
+            }
+
+            renderAlgorithmThumbnails() {
+                const container = document.getElementById('algorithmThumbnails');
+                if (!container) {
+                    console.warn('Algorithm thumbnails container not found');
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                this.algorithms.forEach((alg, index) => {
+                    const button = document.createElement('button');
+                    const isSelected = index === this.currentAlgorithm;
+                    button.className = `p-3 rounded-lg text-xs text-center transition-all ${
+                        isSelected
+                            ? `${alg.color} text-white shadow-lg scale-105`
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`;
+                    button.innerHTML = `<div class="font-semibold">${alg.name}</div>`;
+                    button.setAttribute('aria-label', `Select ${alg.name} algorithm`);
+                    button.setAttribute('aria-pressed', isSelected);
+                    
+                    button.addEventListener('click', () => {
+                        this.currentAlgorithm = index;
+                        this.handleReset();
+                        this.updateDisplay();
+                        this.renderVisualization();
+                        this.renderAlgorithmThumbnails(); // Re-render to update selection
+                    });
+                    
+                    container.appendChild(button);
+                });
+            }
+
+            renderStepTimeline() {
+                const container = document.getElementById('stepTimeline');
+                if (!container) {
+                    console.warn('Step timeline container not found');
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                this.currentAlg.steps.forEach((stepInfo, index) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'flex flex-col items-center cursor-pointer';
+                    stepDiv.setAttribute('role', 'button');
+                    stepDiv.setAttribute('tabindex', '0');
+                    stepDiv.setAttribute('aria-label', `Go to step ${index + 1}: ${stepInfo.title}`);
+                    
+                    const stepNumber = document.createElement('div');
+                    stepNumber.className = `w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300`;
+                    stepNumber.textContent = index + 1;
+                    
+                    const stepTitle = document.createElement('div');
+                    stepTitle.className = 'text-xs text-gray-600 mt-1 text-center max-w-16';
+                    stepTitle.textContent = stepInfo.title;
+                    
+                    if (index <= this.step) {
+                        stepNumber.className += ` ${this.currentAlg.color} text-white shadow-lg`;
+                    } else {
+                        stepNumber.className += ' bg-gray-200 text-gray-500';
+                    }
+                    
+                    stepDiv.appendChild(stepNumber);
+                    stepDiv.appendChild(stepTitle);
+                    
+                    stepDiv.addEventListener('click', () => {
+                        this.step = index;
+                        this.isPlaying = false;
+                        this.stopAnimation();
+                        this.updateDisplay();
+                        this.renderVisualization();
+                        this.updatePlayButton();
+                    });
+                    
+                    stepDiv.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.step = index;
+                            this.isPlaying = false;
+                            this.stopAnimation();
+                            this.updateDisplay();
+                            this.renderVisualization();
+                            this.updatePlayButton();
+                        }
+                    });
+                    
+                    container.appendChild(stepDiv);
+                });
+            }
+
+            updateTimelineProgress() {
+                const progress = this.step / (this.currentAlg.steps.length - 1);
+                const timelineProgress = document.getElementById('timelineProgress');
+                if (timelineProgress) {
+                    timelineProgress.style.width = `${progress * 100}%`;
+                    timelineProgress.className = `absolute top-0 left-0 h-0.5 transition-all duration-1000 ${this.currentAlg.color}`;
+                }
+            }
+
+            renderVisualization() {
+                const container = document.getElementById('visualization');
+                if (!container) {
+                    console.warn('Visualization container not found');
+                    return;
+                }
+                
+                const progress = (this.step + 1) / this.currentAlg.steps.length;
+                
+                // Background grid
+                let gridHTML = '<div class="absolute inset-0 opacity-10"><div class="grid grid-cols-8 grid-rows-6 h-full">';
+                for (let i = 0; i < 48; i++) {
+                    gridHTML += '<div class="border border-gray-400"></div>';
+                }
+                gridHTML += '</div></div>';
+                
+                // Algorithm-specific visualization
+                let visualizationHTML = '';
+                
+                switch (this.currentAlgorithm) {
+                    case 0: // Linear Regression
+                        visualizationHTML = this.renderLinearRegression();
+                        break;
+                    case 1: // K-Means
+                        visualizationHTML = this.renderKMeans();
+                        break;
+                    case 2: // Decision Tree
+                        visualizationHTML = this.renderDecisionTree();
+                        break;
+                    case 3: // Neural Network
+                        visualizationHTML = this.renderNeuralNetwork();
+                        break;
+                    case 4: // Random Forest
+                        visualizationHTML = this.renderRandomForest();
+                        break;
+                    case 5: // Gradient Descent
+                        visualizationHTML = this.renderGradientDescent();
+                        break;
+                }
+                
+                // Progress bar
+                const progressBarHTML = `
+                    <div class="absolute bottom-2 left-2 right-2">
+                        <div class="w-full bg-gray-300 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all duration-300 ${this.currentAlg.color}" style="width: ${progress * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = gridHTML + visualizationHTML + progressBarHTML;
+            }
+
+            renderLinearRegression() {
+                let html = '<div class="relative h-full">';
+                
+                // Data points
+                for (let i = 0; i < 8; i++) {
+                    const left = 15 + i * 10;
+                    const top = 80 - (i * 8 + Math.sin(i) * 10);
+                    const scale = this.step >= 1 ? 'scale(1.2)' : 'scale(1)';
+                    html += `<div class="absolute w-3 h-3 bg-blue-600 rounded-full transition-all duration-1000" style="left: ${left}%; top: ${top}%; transform: ${scale};"></div>`;
+                }
+                
+                // Regression line
+                const lineTop = 75 - this.step * 5;
+                const rotation = -10 + this.step * 3;
+                const opacity = this.step >= 0 ? 1 : 0;
+                html += `<div class="absolute h-0.5 bg-red-500 transition-all duration-1000 origin-left" style="left: 15%; top: ${lineTop}%; width: 70%; transform: rotate(${rotation}deg); opacity: ${opacity};"></div>`;
+                
+                html += '</div>';
+                return html;
+            }
+
+            renderKMeans() {
+                let html = '<div class="relative h-full">';
+                
+                // Centroids
+                for (let i = 0; i < 3; i++) {
+                    const color = i === 0 ? 'bg-red-500' : i === 1 ? 'bg-blue-500' : 'bg-green-500';
+                    const left = 25 + i * 25 + (this.step >= 2 ? Math.sin(this.step + i) * 5 : 0);
+                    const top = 30 + (this.step >= 2 ? Math.cos(this.step + i) * 5 : 0);
+                    const scale = this.step >= 0 ? 'scale(1)' : 'scale(0)';
+                    html += `<div class="absolute w-6 h-6 rounded-full transition-all duration-1000 ${color}" style="left: ${left}%; top: ${top}%; transform: ${scale};"></div>`;
+                }
+                
+                // Data points
+                for (let i = 0; i < 12; i++) {
+                    const cluster = Math.floor(i / 4);
+                    const colors = ['bg-red-300', 'bg-blue-300', 'bg-green-300'];
+                    const color = this.step >= 1 ? colors[cluster] : 'bg-gray-400';
+                    const left = 20 + (i % 4) * 15 + cluster * 20;
+                    const top = 50 + Math.sin(i) * 20;
+                    const scale = this.step >= 1 ? 'scale(1)' : 'scale(0.8)';
+                    html += `<div class="absolute w-3 h-3 rounded-full transition-all duration-1000 ${color}" style="left: ${left}%; top: ${top}%; transform: ${scale};"></div>`;
+                }
+                
+                html += '</div>';
+                return html;
+            }
+
+            renderDecisionTree() {
+                let html = '<div class="relative h-full"><div class="flex flex-col items-center h-full pt-4">';
+                
+                // Root
+                const rootOpacity = this.step >= 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-0';
+                html += `<div class="w-16 h-8 bg-purple-500 rounded transition-all duration-1000 flex items-center justify-center text-xs text-white ${rootOpacity}">Root</div>`;
+                
+                // Level 1
+                html += '<div class="flex justify-center space-x-12 mt-4">';
+                for (let i = 0; i < 2; i++) {
+                    const opacity = this.step >= 2 ? 'opacity-100 scale-100' : 'opacity-0 scale-0';
+                    const text = i === 0 ? 'Left' : 'Right';
+                    html += `<div class="w-14 h-7 bg-purple-400 rounded transition-all duration-1000 flex items-center justify-center text-xs text-white ${opacity}" style="transition-delay: ${i * 200}ms">${text}</div>`;
+                }
+                html += '</div>';
+                
+                // Level 2 (Leaves)
+                html += '<div class="flex justify-center space-x-6 mt-4">';
+                for (let i = 0; i < 4; i++) {
+                    const opacity = this.step >= 4 ? 'opacity-100 scale-100' : 'opacity-0 scale-0';
+                    html += `<div class="w-12 h-6 bg-purple-300 rounded transition-all duration-1000 flex items-center justify-center text-xs text-white ${opacity}" style="transition-delay: ${i * 150}ms">Leaf</div>`;
+                }
+                html += '</div>';
+                
+                // Connecting lines
+                html += '<svg class="absolute inset-0 pointer-events-none"><g stroke="currentColor" stroke-width="2" fill="none" class="text-purple-400">';
+                if (this.step >= 1) {
+                    html += '<line x1="50%" y1="20%" x2="35%" y2="35%" class="animate-pulse"></line>';
+                    html += '<line x1="50%" y1="20%" x2="65%" y2="35%" class="animate-pulse"></line>';
+                }
+                if (this.step >= 3) {
+                    html += '<line x1="35%" y1="40%" x2="25%" y2="55%" class="animate-pulse"></line>';
+                    html += '<line x1="35%" y1="40%" x2="45%" y2="55%" class="animate-pulse"></line>';
+                    html += '<line x1="65%" y1="40%" x2="55%" y2="55%" class="animate-pulse"></line>';
+                    html += '<line x1="65%" y1="40%" x2="75%" y2="55%" class="animate-pulse"></line>';
+                }
+                html += '</g></svg>';
+                
+                html += '</div></div>';
+                return html;
+            }
+
+            renderNeuralNetwork() {
+                let html = '<div class="relative h-full">';
+                
+                // Input layer
+                html += '<div class="absolute left-4 top-1/2 transform -translate-y-1/2 space-y-4">';
+                for (let i = 0; i < 3; i++) {
+                    const pulse = this.step >= 0 && this.isPlaying ? 'bg-blue-400 animate-pulse' : '';
+                    html += `<div class="w-8 h-8 bg-gray-400 rounded-full transition-all duration-1000 ${pulse}"></div>`;
+                }
+                html += '</div>';
+                
+                // Hidden layer
+                html += '<div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 space-y-3">';
+                for (let i = 0; i < 4; i++) {
+                    const pulse = this.step >= 1 && this.isPlaying ? 'bg-purple-400 animate-pulse' : '';
+                    html += `<div class="w-7 h-7 bg-gray-400 rounded-full transition-all duration-1000 ${pulse}" style="transition-delay: ${i * 100}ms"></div>`;
+                }
+                html += '</div>';
+                
+                // Output layer
+                html += '<div class="absolute right-4 top-1/2 transform -translate-y-1/2 space-y-6">';
+                for (let i = 0; i < 2; i++) {
+                    const pulse = this.step >= 2 && this.isPlaying ? 'bg-red-400 animate-pulse' : '';
+                    html += `<div class="w-8 h-8 bg-gray-400 rounded-full transition-all duration-1000 ${pulse}" style="transition-delay: ${i * 150}ms"></div>`;
+                }
+                html += '</div>';
+                
+                // Connections
+                html += '<svg class="absolute inset-0 pointer-events-none"><g stroke="currentColor" stroke-width="1" fill="none" class="text-gray-300">';
+                
+                // Input to hidden connections
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        const color = this.step >= 0 && this.isPlaying ? 'text-blue-400' : '';
+                        const opacity = this.step >= 0 ? 0.6 : 0.2;
+                        html += `<line x1="15%" y1="${35 + i * 15}%" x2="48%" y2="${30 + j * 12}%" class="${color}" stroke-opacity="${opacity}"></line>`;
+                    }
+                }
+                
+                // Hidden to output connections
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        const color = this.step >= 1 && this.isPlaying ? 'text-purple-400' : '';
+                        const opacity = this.step >= 1 ? 0.6 : 0.2;
+                        html += `<line x1="52%" y1="${30 + i * 12}%" x2="85%" y2="${40 + j * 20}%" class="${color}" stroke-opacity="${opacity}"></line>`;
+                    }
+                }
+                
+                html += '</g></svg></div>';
+                return html;
+            }
+
+            renderRandomForest() {
+                let html = '<div class="relative h-full p-4">';
+                
+                // Multiple trees
+                for (let i = 0; i < 3; i++) {
+                    const opacity = this.step >= i ? 'opacity-100 scale-100' : 'opacity-0 scale-75';
+                    const left = 20 + i * 25;
+                    const delay = i * 300;
+                    html += `
+                        <div class="absolute transition-all duration-1000 ${opacity}" style="left: ${left}%; top: 20%; transition-delay: ${delay}ms">
+                            <div class="w-8 h-6 bg-orange-500 rounded mb-2"></div>
+                            <div class="flex space-x-2">
+                                <div class="w-6 h-4 bg-orange-400 rounded"></div>
+                                <div class="w-6 h-4 bg-orange-400 rounded"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Voting/averaging visualization
+                if (this.step >= 3) {
+                    html += `
+                        <div class="absolute right-8 top-1/2 transform -translate-y-1/2">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold animate-bounce">∑</div>
+                                <div class="text-xs mt-1 font-semibold text-gray-700">Vote</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Arrows showing flow
+                if (this.step >= 4) {
+                    html += `
+                        <div class="absolute top-1/2 left-1/2 transform -translate-y-1/2">
+                            <div class="flex items-center space-x-2 animate-pulse">
+                                <div class="text-2xl">→</div>
+                                <div class="text-2xl">→</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                return html;
+            }
+
+            renderGradientDescent() {
+                let html = '<div class="relative h-full">';
+                
+                // Loss landscape
+                html += '<svg class="absolute inset-0" viewBox="0 0 100 60"><path d="M 10 50 Q 30 20 50 30 Q 70 40 90 25" stroke="currentColor" stroke-width="2" fill="none" class="text-indigo-400"></path></svg>';
+                
+                // Current position
+                const left = 15 + this.step * 15;
+                const top = 85 - this.step * 12;
+                const scale = this.isPlaying ? 'scale(1.3)' : 'scale(1)';
+                html += `<div class="absolute w-4 h-4 bg-indigo-600 rounded-full transition-all duration-1000" style="left: ${left}%; top: ${top}%; transform: ${scale};"></div>`;
+                
+                // Gradient arrow
+                if (this.step > 0) {
+                    const arrowLeft = 18 + (this.step - 1) * 15;
+                    const arrowTop = 82 - (this.step - 1) * 12;
+                    html += `<div class="absolute text-2xl text-indigo-500 transition-all duration-500" style="left: ${arrowLeft}%; top: ${arrowTop}%;">↘</div>`;
+                }
+                
+                // Global minimum indicator
+                if (this.step >= 4) {
+                    html += `
+                        <div class="absolute bottom-8 right-1/4 text-center">
+                            <div class="w-4 h-4 bg-yellow-400 rounded-full animate-pulse"></div>
+                            <div class="text-xs mt-1 font-semibold text-gray-700">Min</div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                return html;
+            }
+        }
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Small delay to ensure all elements are properly loaded
+            setTimeout(() => {
+                new MLAlgorithmAnimations();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
