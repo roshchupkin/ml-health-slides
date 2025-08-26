@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Machine Learning for Health Research - Interactive Slides</title>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-X05FSFG2X7"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-X05FSFG2X7');
+    </script>
     <style>
         * {
             margin: 0;
@@ -378,18 +388,11 @@
         </div>
     </div>
 
+
+    
     <script>
         // Add smooth scrolling and some interactive effects
         document.addEventListener('DOMContentLoaded', function() {
-            // Add click tracking for analytics (if needed)
-            const links = document.querySelectorAll('.slide-link');
-            links.forEach(link => {
-                link.addEventListener('click', function() {
-                    // You can add analytics tracking here
-                    console.log('Navigating to:', this.href);
-                });
-            });
-
             // Add some subtle animations
             const categories = document.querySelectorAll('.category');
             categories.forEach((category, index) => {
